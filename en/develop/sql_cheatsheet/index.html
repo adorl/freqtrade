@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
@@ -2249,7 +2249,7 @@ It is strongly advised to backup your database file before making any manual cha
 <h3 id="remove-trade-from-the-database">Remove trade from the database<a class="headerlink" href="#remove-trade-from-the-database" title="Permanent link">&para;</a></h3>
 <div class="admonition tip">
 <p class="admonition-title">Use RPC Methods to delete trades</p>
-<p>Consider using <code>/delete &lt;tradeid&gt;</code> via telegram or rest API. That's the recommended way to deleting trades.</p>
+<p>Consider using <code>/delete &lt;tradeid&gt;</code> via telegram or rest API. That's the recommended way to deleting trades, as it will also remove the corresponding orders and custom data, and it will also trigger the necessary events in the bot to keep everything in sync.</p>
 </div>
 <p>If you'd still like to remove a trade from the database directly, you can use the below query.</p>
 <div class="admonition danger">
@@ -2257,12 +2257,17 @@ It is strongly advised to backup your database file before making any manual cha
 <p>Some systems (Ubuntu) disable foreign keys in their sqlite3 packaging. When using sqlite - please ensure that foreign keys are on by running <code>PRAGMA foreign_keys = ON</code> before the above query.</p>
 </div>
 <div class="highlight"><pre><span></span><code><span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">trades</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="n">tradeid</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ft_trade_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="n">tradeid</span><span class="o">&gt;</span><span class="p">;</span>
+<span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">trade_custom_data</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ft_trade_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&lt;</span><span class="n">tradeid</span><span class="o">&gt;</span><span class="p">;</span>
+
 
 <span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">trades</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">31</span><span class="p">;</span>
+<span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">orders</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ft_trade_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">31</span><span class="p">;</span>
+<span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">trade_custom_data</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">ft_trade_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">31</span><span class="p">;</span>
 </code></pre></div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>This will remove this trade from the database. Please make sure you got the correct id and <strong>NEVER</strong> run this query without the <code>where</code> clause.</p>
+<p>This will remove the specified trade from the database. Please make sure you got the correct id and <strong>NEVER</strong> run this query without the <code>where</code> clause.</p>
 </div>
 
 

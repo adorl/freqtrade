@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
@@ -3698,6 +3698,10 @@ Orders that don't fill immediately are subject to regular timeout handling, whic
 <p class="admonition-title">Note</p>
 <p>Backtesting fills orders if their price falls within the candle's low/high range.
 The below callbacks will be called once per (detail) candle for orders that don't fill immediately (which use custom pricing).</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Replacing orders</p>
+<p>If you'd like to replace an order with a different price instead of just cancelling it, you might want to look at <a href="#adjust-order-price"><code>adjust_order_price()</code></a> instead, which will allow you to both cancel the order, as well as replace it with a new price.</p>
 </div>
 <h3 id="custom-order-timeout-example">Custom order timeout example<a class="headerlink" href="#custom-order-timeout-example" title="Permanent link">&para;</a></h3>
 <p>Called for every open order until that order is either filled or cancelled.

@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
@@ -3273,7 +3273,7 @@ In the below case, <code>max_open_trades</code> would be 3 after the merging - a
 </tr>
 <tr>
 <td><code>unfilledtimeout.unit</code></td>
-<td>Unit to use in unfilledtimeout setting. Note: If you set unfilledtimeout.unit to "seconds", "internals.process_throttle_secs" must be inferior or equal to timeout <a href="#parameters-in-the-strategy">Strategy Override</a>. <br> <em>Defaults to <code>"minutes"</code>.</em> <br> <strong>Datatype:</strong> String</td>
+<td>Unit to use in unfilledtimeout setting. Note: If you set <code>unfilledtimeout.unit</code> to "seconds", "internals.process_throttle_secs" must be inferior or equal to timeout <a href="#parameters-in-the-strategy">Strategy Override</a>. <br> <em>Defaults to <code>"minutes"</code>.</em> <br> <strong>Datatype:</strong> String</td>
 </tr>
 <tr>
 <td><code>unfilledtimeout.exit_timeout_count</code></td>
@@ -3425,7 +3425,7 @@ In the below case, <code>max_open_trades</code> would be 3 after the merging - a
 </tr>
 <tr>
 <td><code>exchange.unknown_fee_rate</code></td>
-<td>Fallback value to use when calculating trading fees. This can be useful for exchanges which have fees in non-tradable currencies. The value provided here will be multiplied with the "fee cost".<br><em>Defaults to <code>None</code><br> </em><em>Datatype:</em>* float</td>
+<td>Fallback value to use when calculating trading fees. This can be useful for exchanges which have fees in non-tradable currencies. The value provided here will be multiplied with the "fee cost".<br><em>Defaults to <code>None</code></em><br> <strong>Datatype:</strong> float</td>
 </tr>
 <tr>
 <td><code>exchange.log_responses</code></td>
@@ -3469,7 +3469,7 @@ In the below case, <code>max_open_trades</code> would be 3 after the merging - a
 </tr>
 <tr>
 <td><code>telegram.reload</code></td>
-<td>Allow "reload" buttons on telegram messages. <br><em>Defaults to <code>true</code>.<br> </em><em>Datatype:</em>* boolean</td>
+<td>Allow "reload" buttons on telegram messages. <br><em>Defaults to <code>true</code>.</em><br> <strong>Datatype:</strong> boolean</td>
 </tr>
 <tr>
 <td><code>telegram.notification_settings.*</code></td>
@@ -3629,11 +3629,11 @@ In the below case, <code>max_open_trades</code> would be 3 after the merging - a
 </tr>
 <tr>
 <td><code>reduce_df_footprint</code></td>
-<td>Recast all numeric columns to float32/int32, with the objective of reducing ram/disk usage (and decreasing train/inference timing backtesting/hyperopt and in FreqAI). <br> <strong>Datatype:</strong> Boolean. <br> Default: <code>False</code>.</td>
+<td>Recast all numeric columns to float32/int32, with the objective of reducing ram/disk usage (and decreasing train/inference timing backtesting/hyperopt and in FreqAI). <br> Default: <code>False</code>. <br> <strong>Datatype:</strong> Boolean.</td>
 </tr>
 <tr>
 <td><code>log_config</code></td>
-<td>Dictionary containing the log config for python logging. <a href="../advanced-setup/#advanced-logging">more info</a> <br> <strong>Datatype:</strong> dict. <br> Default: <code>FtRichHandler</code></td>
+<td>Dictionary containing the log config for python logging. <a href="../advanced-setup/#advanced-logging">more info</a> <br> Default: <code>FtRichHandler</code> <br> <strong>Datatype:</strong> dict.</td>
 </tr>
 </tbody>
 </table>

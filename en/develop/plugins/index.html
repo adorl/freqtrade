@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
     
     
       
@@ -695,6 +695,17 @@
     <span class="md-ellipsis">
       
         MarketCapPairList
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crossmarketpairlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CrossMarketPairList
       
     </span>
   </a>
@@ -2309,6 +2320,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#crossmarketpairlist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CrossMarketPairList
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#agefilter" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2578,9 +2600,9 @@
 <h1 id="plugins">Plugins<a class="headerlink" href="#plugins" title="Permanent link">&para;</a></h1>
 <h2 id="pairlists-and-pairlist-handlers">Pairlists and Pairlist Handlers<a class="headerlink" href="#pairlists-and-pairlist-handlers" title="Permanent link">&para;</a></h2>
 <p>Pairlist Handlers define the list of pairs (pairlist) that the bot should trade. They are configured in the <code>pairlists</code> section of the configuration settings.</p>
-<p>In your configuration, you can use Static Pairlist (defined by the <a href="#static-pair-list"><code>StaticPairList</code></a> Pairlist Handler) and Dynamic Pairlist (defined by the <a href="#volume-pair-list"><code>VolumePairList</code></a> and <a href="#percent-change-pair-list"><code>PercentChangePairList</code></a> Pairlist Handlers).</p>
+<p>In your configuration, you can use Static Pairlist (defined by the <a href="#static-pair-list"><code>StaticPairList</code></a> Pairlist Handler) and Dynamic Pairlist (defined by the <a href="#volume-pair-list"><code>VolumePairList</code></a>, <a href="#crossmarketpairlist"><code>CrossMarketPairList</code></a>, <a href="#marketcappairlist"><code>MarketCapPairlist</code></a> and <a href="#percent-change-pair-list"><code>PercentChangePairList</code></a> Pairlist Handlers).</p>
 <p>Additionally, <a href="#agefilter"><code>AgeFilter</code></a>, <a href="#delistfilter"><code>DelistFilter</code></a>, <a href="#precisionfilter"><code>PrecisionFilter</code></a>, <a href="#pricefilter"><code>PriceFilter</code></a>, <a href="#shufflefilter"><code>ShuffleFilter</code></a>, <a href="#spreadfilter"><code>SpreadFilter</code></a> and <a href="#volatilityfilter"><code>VolatilityFilter</code></a> act as Pairlist Filters, removing certain pairs and/or moving their positions in the pairlist.</p>
-<p>If multiple Pairlist Handlers are used, they are chained and a combination of all Pairlist Handlers forms the resulting pairlist the bot uses for trading and backtesting. Pairlist Handlers are executed in the sequence they are configured. You can define either <code>StaticPairList</code>, <code>VolumePairList</code>, <code>ProducerPairList</code>, <code>RemotePairList</code>, <code>MarketCapPairList</code> or <code>PercentChangePairList</code> as the starting Pairlist Handler.</p>
+<p>If multiple Pairlist Handlers are used, they are chained and a combination of all Pairlist Handlers forms the resulting pairlist the bot uses for trading and backtesting. Pairlist Handlers are executed in the sequence they are configured. You can define either <code>StaticPairList</code>, <code>VolumePairList</code>, <code>ProducerPairList</code>, <code>RemotePairList</code>, <code>MarketCapPairList</code>, <code>PercentChangePairList</code> or <code>CrossMarketPairList</code> as the starting Pairlist Handler.</p>
 <p>Inactive markets are always removed from the resulting pairlist. Explicitly blacklisted pairs (those in the <code>pair_blacklist</code> configuration setting) are also always removed from the resulting pairlist.</p>
 <h3 id="pair-blacklist">Pair blacklist<a class="headerlink" href="#pair-blacklist" title="Permanent link">&para;</a></h3>
 <p>The pair blacklist (configured via <code>exchange.pair_blacklist</code> in the configuration) disallows certain pairs from trading.
@@ -2595,6 +2617,7 @@ You may also use something like <code>.*DOWN/BTC</code> or <code>.*UP/BTC</code>
 <li><a href="#producerpairlist"><code>ProducerPairList</code></a></li>
 <li><a href="#remotepairlist"><code>RemotePairList</code></a></li>
 <li><a href="#marketcappairlist"><code>MarketCapPairList</code></a></li>
+<li><a href="#crossmarketpairlist"><code>CrossMarketPairList</code></a></li>
 <li><a href="#agefilter"><code>AgeFilter</code></a></li>
 <li><a href="#delistfilter"><code>DelistFilter</code></a></li>
 <li><a href="#fulltradesfilter"><code>FullTradesFilter</code></a></li>
@@ -2828,6 +2851,7 @@ Obviously in complex such configurations, the Producer may not provide data for 
 </code></pre></div>
 <p>The optional <code>mode</code> option specifies if the pairlist should be used as a <code>blacklist</code> or as a <code>whitelist</code>. The default value is "whitelist".</p>
 <p>The optional <code>processing_mode</code> option in the RemotePairList configuration determines how the retrieved pairlist is processed. It can have two values: "filter" or "append". The default value is "filter".</p>
+<p>The optional <code>number_assets</code> option in the RemotePairList configuration determines how many pairs will be returned if used in whitelist <code>mode</code>. By default, all pairs will be returned. In blacklist <code>mode</code>, this option will be ignored.</p>
 <p>In "filter" mode, the retrieved pairlist is used as a filter. Only the pairs present in both the original pairlist and the retrieved pairlist are included in the final pairlist. Other pairs are filtered out.</p>
 <p>In "append" mode, the retrieved pairlist is added to the original pairlist. All pairs from both lists are included in the final pairlist without any filtering.</p>
 <p>The <code>pairlist_url</code> option specifies the URL of the remote server where the pairlist is located, or the path to a local file (if file:/// is prepended). This allows the user to use either a remote server or a local file as the source for the pairlist.</p>
@@ -2904,6 +2928,9 @@ If an incorrect category string is chosen, the plugin will print the available c
 <p class="admonition-title">Duplicate symbols in coingecko</p>
 <p>Coingecko often has duplicate symbols, where the same symbol is used for different coins. Freqtrade will use the symbol as is and try to search for it on the exchange. If the symbol exists - it will be used. Freqtrade will however not check if the <em>intended</em> symbol is the one coingecko meant. This can sometimes lead to unexpected results, especially on low volume coins or with meme coin categories.</p>
 </div>
+<h4 id="crossmarketpairlist">CrossMarketPairList<a class="headerlink" href="#crossmarketpairlist" title="Permanent link">&para;</a></h4>
+<p>Generate or filter pairs based of their availability on the opposite market.</p>
+<p>The <code>pairs_exist_on</code> setting defines whether the pairs should exists on both spot and futures market (<code>both_markets</code>) or only exist on the specified trading mode (<code>current_market_only</code>). By default, the plugin will be in <code>both_markets</code> setting, which means whitelisted pairs have to exists on both spot and futures markets.</p>
 <h4 id="agefilter">AgeFilter<a class="headerlink" href="#agefilter" title="Permanent link">&para;</a></h4>
 <p>Removes pairs that have been listed on the exchange for less than <code>min_days_listed</code> days (defaults to <code>10</code>) or more than <code>max_days_listed</code> days (defaults <code>None</code> mean infinity).</p>
 <p>When pairs are first listed on an exchange they can suffer huge price drops and volatility
@@ -3195,7 +3222,8 @@ If <code>trade_limit</code> or more trades resulted in stoploss, trading will st
 <code>trade_limit</code> and <code>lookback_period</code> will need to be tuned for your strategy.</p>
 </div>
 <h4 id="maxdrawdown">MaxDrawdown<a class="headerlink" href="#maxdrawdown" title="Permanent link">&para;</a></h4>
-<p>The <code>MaxDrawdown</code> protection evaluates trades that closed within the current <code>lookback_period</code> (or <code>lookback_period_candles</code>). It supports 2 calculation modes:</p>
+<p>The <code>MaxDrawdown</code> protection evaluates trades that closed within the current <code>lookback_period</code> (or <code>lookback_period_candles</code>).<br />
+It supports 2 calculation modes:</p>
 <ul>
 <li><code>calculation_mode: "ratios"</code> (default): Legacy approximation based on cumulative profit ratios.</li>
 <li><code>calculation_mode: "equity"</code>: Standard peak-to-trough drawdown on the account equity curve, using starting balance and cumulative absolute profit.</li>
@@ -3277,11 +3305,11 @@ All protections are evaluated in the sequence they are defined.</p>
             <span class="p">},</span>
             <span class="p">{</span>
                 <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;MaxDrawdown&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;calculation_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;equity&quot;</span><span class="p">,</span>
                 <span class="s2">&quot;lookback_period_candles&quot;</span><span class="p">:</span> <span class="mi">48</span><span class="p">,</span>
                 <span class="s2">&quot;trade_limit&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
                 <span class="s2">&quot;stop_duration_candles&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-                <span class="s2">&quot;max_allowed_drawdown&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
-                <span class="s2">&quot;calculation_mode&quot;</span><span class="p">:</span> <span class="s2">&quot;equity&quot;</span>
+                <span class="s2">&quot;max_allowed_drawdown&quot;</span><span class="p">:</span> <span class="mf">0.2</span>
             <span class="p">},</span>
             <span class="p">{</span>
                 <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;StoplossGuard&quot;</span><span class="p">,</span>
