@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -2409,6 +2409,10 @@
 <tr>
 <td><code>batch_size</code></td>
 <td>The size of the batches to use during training. <br><br> <strong>Datatype:</strong> int. <br> Default: <code>64</code>.</td>
+</tr>
+<tr>
+<td><code>early_stopping_patience</code></td>
+<td>Number of epochs with no improvement in validation loss before training is stopped early. This helps prevent overfitting by halting training when the model stops improving. Set to <code>0</code> to disable early stopping. Requires a test/validation split (<code>test_size &gt; 0</code>). <br><br> <strong>Datatype:</strong> int. <br> Default: <code>0</code> (disabled).</td>
 </tr>
 </tbody>
 </table>
