@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2600,9 +2600,9 @@ Define our model, loss function, and optimizer, and then move them to the approp
 <p>Like all freqai models, PyTorch models inherit <code>IFreqaiModel</code>. <code>IFreqaiModel</code> declares three abstract methods: <code>train</code>, <code>fit</code>, and <code>predict</code>. we implement these methods in three levels of hierarchy.
 From top to bottom:</p>
 <ol>
-<li><code>BasePyTorchModel</code> - Implements the <code>train</code> method. all <code>BasePyTorch*</code> inherit it. responsible for general data preparation (e.g., data normalization) and calling the <code>fit</code> method. Sets <code>device</code> attribute used by children classes. Sets <code>model_type</code> attribute used by the parent class.</li>
-<li><code>BasePyTorch*</code> -  Implements the <code>predict</code> method. Here, the <code>*</code> represents a group of algorithms, such as classifiers or regressors. responsible for data preprocessing, predicting, and postprocessing if needed.</li>
-<li><code>PyTorch*Classifier</code> / <code>PyTorch*Regressor</code> - implements the <code>fit</code> method. responsible for the main train flaw, where we initialize the trainer and model objects.</li>
+<li><code>BasePyTorchModel</code> - Implements the <code>train</code> method. All <code>BasePyTorch*</code> inherit it. Responsible for general data preparation (e.g., data normalization) and calling the <code>fit</code> method. Sets <code>device</code> attribute used by children classes. Sets <code>model_type</code> attribute used by the parent class.</li>
+<li><code>BasePyTorch*</code> -  Implements the <code>predict</code> method. Here, the <code>*</code> represents a group of algorithms, such as classifiers or regressors. Responsible for data preprocessing, predicting, and postprocessing if needed.</li>
+<li><code>PyTorch*Classifier</code> / <code>PyTorch*Regressor</code> - implements the <code>fit</code> method. Responsible for the main training flow, where we initialize the trainer and model objects.</li>
 </ol>
 <p><img alt="image" src="../assets/freqai_pytorch-diagram.png" /></p>
 <h4 id="full-example">Full example<a class="headerlink" href="#full-example" title="Permanent link">&para;</a></h4>
@@ -2770,7 +2770,7 @@ To see a full example, you can refer to the <a href="https://github.com/freqtrad
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.annotate", "search.share", "content.code.copy", "content.action.edit", "navigation.top", "navigation.footer"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="../javascripts/config.js"></script>
       

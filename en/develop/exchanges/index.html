@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../images/logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -31,7 +31,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -2758,13 +2758,17 @@
 <h1 id="exchange-specific-notes">Exchange-specific Notes<a class="headerlink" href="#exchange-specific-notes" title="Permanent link">&para;</a></h1>
 <p>This page combines common gotchas and Information which are exchange-specific and most likely don't apply to other exchanges.</p>
 <h2 id="quick-overview-of-supported-exchange-features">Quick overview of supported exchange features<a class="headerlink" href="#quick-overview-of-supported-exchange-features" title="Permanent link">&para;</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Supported exchanges</p>
+<p>The below list <strong>only</strong> contains <strong>supported exchanges</strong>. Other exchanges may work, but will not have stoploss on exchange available.</p>
+</div>
 <table>
 <thead>
 <tr>
 <th>Exchange</th>
 <th>Mode</th>
 <th>Margin mode</th>
-<th>Stoploss type</th>
+<th>Stoploss on exchange</th>
 </tr>
 </thead>
 <tbody>
@@ -2790,7 +2794,7 @@
 <td><a href="./#bitmart">Bitmart</a></td>
 <td>spot</td>
 <td></td>
-<td>❌ (not supported)</td>
+<td>❌ (not available)</td>
 </tr>
 <tr>
 <td><a href="./#bitget">Bitget</a></td>
@@ -2808,7 +2812,7 @@
 <td><a href="./#bybit">Bybit</a></td>
 <td>spot</td>
 <td></td>
-<td>❌ (not supported)</td>
+<td>❌ (not available)</td>
 </tr>
 <tr>
 <td><a href="./#bybit">Bybit</a></td>
@@ -2838,7 +2842,7 @@
 <td><a href="./#hyperliquid">Hyperliquid</a></td>
 <td>spot</td>
 <td></td>
-<td>❌ (not supported)</td>
+<td>❌ (not available)</td>
 </tr>
 <tr>
 <td><a href="./#hyperliquid">Hyperliquid</a></td>
@@ -2862,19 +2866,19 @@
 <td><a href="./#okx">OKX</a></td>
 <td>spot</td>
 <td></td>
-<td>limit</td>
+<td>market, limit</td>
 </tr>
 <tr>
 <td><a href="./#okx">OKX</a></td>
 <td>futures</td>
 <td>isolated</td>
-<td>limit</td>
+<td>market, limit</td>
 </tr>
 <tr>
 <td><a href="./#bitvavo">Bitvavo</a></td>
 <td>spot</td>
 <td></td>
-<td>❌ (not supported)</td>
+<td>❌ (not available)</td>
 </tr>
 <tr>
 <td><a href="./#kucoin">Kucoin</a></td>
@@ -3093,6 +3097,10 @@ Kucoin accounts may use <code>KCS</code> for fees, and if a trade happens to be 
 <p>HTX supports <code>stoploss_on_exchange</code> and uses <code>stop-limit</code> orders. It provides great advantages, so we recommend to benefit from it by enabling stoploss on exchange.</p>
 </div>
 <h2 id="okx">OKX<a class="headerlink" href="#okx" title="Permanent link">&para;</a></h2>
+<div class="admonition tip">
+<p class="admonition-title">Stoploss on Exchange</p>
+<p>OKX supports <code>stoploss_on_exchange</code> with both stop-limit and stop-market orders on spot and futures markets. You can use either <code>"limit"</code> or <code>"market"</code> in the <code>order_types.stoploss</code> configuration setting to select the stoploss order type.</p>
+</div>
 <p>OKX requires a passphrase for each api key, you will therefore need to add this key into the configuration so your exchange section looks as follows:</p>
 <div class="highlight"><pre><span></span><code><span class="nt">&quot;exchange&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;okx&quot;</span><span class="p">,</span>
@@ -3452,7 +3460,7 @@ We will not be able to provide support for issues caused by custom settings in <
       <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.annotate", "search.share", "content.code.copy", "content.action.edit", "navigation.top", "navigation.footer"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
         <script src="../javascripts/config.js"></script>
       
