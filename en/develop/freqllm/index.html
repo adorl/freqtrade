@@ -1,0 +1,5415 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Freqtrade is a free and open source crypto trading bot written in Python, designed to support all major exchanges and be controlled via Telegram or builtin Web UI">
+      
+      
+      
+        <link rel="canonical" href="https://www.freqtrade.io/en/stable/freqllm/">
+      
+      
+        <link rel="prev" href="../freqai-developers/">
+      
+      
+        <link rel="next" href="../leverage/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../images/logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>FreqLLM architecture - Freqtrade</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/ft.extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+<script id="__analytics">function __md_analytics(){function e(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],e("js",new Date),e("config","G-VH170LG9M5"),document.addEventListener("DOMContentLoaded",(function(){document.forms.search&&document.forms.search.query.addEventListener("blur",(function(){this.value&&e("event","search",{search_term:this.value})}));document$.subscribe((function(){var t=document.forms.feedback;if(void 0!==t)for(var a of t.querySelectorAll("[type=submit]"))a.addEventListener("click",(function(a){a.preventDefault();var n=document.location.pathname,d=this.getAttribute("data-md-value");e("event","feedback",{page:n,data:d}),t.firstElementChild.disabled=!0;var r=t.querySelector(".md-feedback__note [data-md-value='"+d+"']");r&&(r.hidden=!1)})),t.hidden=!1})),location$.subscribe((function(t){e("config","G-VH170LG9M5",{page_path:t.pathname})}))}));var t=document.createElement("script");t.async=!0,t.src="https://www.googletagmanager.com/gtag/js?id=G-VH170LG9M5",document.getElementById("__analytics").insertAdjacentElement("afterEnd",t)}</script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="tear">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#freqllm" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Freqtrade" class="md-header__button md-logo" aria-label="Freqtrade" data-md-component="logo">
+      
+  <img src="../images/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Freqtrade
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              FreqLLM architecture
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="tear"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="tear"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/freqtrade/freqtrade" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+
+  <!-- Main navigation -->
+  
+  
+  <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+    <div class="md-sidebar__scrollwrap">
+      <div class="md-sidebar__inner">
+        
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Freqtrade" class="md-nav__button md-logo" aria-label="Freqtrade" data-md-component="logo">
+      
+  <img src="../images/logo.png" alt="logo">
+
+    </a>
+    Freqtrade
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/freqtrade/freqtrade" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../docker_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart with Docker
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bot-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Freqtrade Basics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy-101/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy-customization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy Customization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy-callbacks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy Callbacks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../stoploss/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Stoploss
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bot-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Start the bot
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Control the bot
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Control the bot
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../telegram-usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telegram
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freq-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    freqUI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rest-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../webhook-config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web Hook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-download/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Downloading
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backtesting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backtesting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hyperopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hyperopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FreqAI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    FreqAI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai-parameter-table/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parameter table
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai-feature-engineering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feature engineering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai-running/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Running FreqAI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai-reinforcement-learning/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reinforcement Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../freqai-developers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FreqLLM architecture
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FreqLLM architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 系统定位
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. 系统定位">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心不变量
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 目录、层次和依赖方向
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 目录、层次和依赖方向">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 依赖图
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-composition-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Composition Root 与资源所有权
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 生命周期与完整时序
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 生命周期与完整时序">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-freqtrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Freqtrade 启动
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-bot-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 每轮 bot loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 每根 K 线
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 下单和成交
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 停止
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 特征工程原理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 特征工程原理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-freqai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 FreqAI 展开规则
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 趋势与波动特征
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 基础蜡烛与突破特征
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 细粒度路径特征
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 支撑、阻力与心理价位
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 外部市场特征
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.6 外部市场特征">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        因果对齐
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 标签生成与策略回放
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 标签生成与策略回放">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 时间窗口
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 多空路径收益
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-candle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 candle 内事件顺序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 标签回放退出顺序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#65" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.5 方向分类标签
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#66-early-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.6 early-fail 标签
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#67" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.7 关键价位事件标签
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#68-q20q50q80" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.8 q20/q50/q80 的训练语义
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-freqllmpolicymodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. FreqLLMPolicyModel 训练和推理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. FreqLLMPolicyModel 训练和推理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 模型组成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 可配置模型后端
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 关键价位样本加权
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 分类概率温度校准
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 分位数残差校准
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 预测可用性
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 确定性入场决策
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. 确定性入场决策">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 单边分量
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 门控顺序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 LLM 门控
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-stake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 stake 公式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.5 杠杆公式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.6 组合风险
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 退出策略
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 退出策略">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-trailing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 trailing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-peak-retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 预测 peak retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-path-collapse-decay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 path collapse 和 decay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 方向反转
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#95" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.5 到期
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-llm-advisor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. LLM Advisor
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. LLM Advisor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Prompt 组成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Provider 层
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 JSON 解析和验证
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#104" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.4 对话上下文
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 归因系统
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. 归因系统">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 为什么记录被拒绝的信号
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 真实未来收益
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 实盘成熟
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. 自适应反馈
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. 自适应反馈">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 模式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 时间衰减
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.3 加权均值、有效样本量和标准误
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#124-isoos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.4 IS/OOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#125" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.5 执行感知反事实回放
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#126" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.6 退出回放
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#127" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.7 熔断
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#128" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.8 应用参数
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#129" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.9 离线分析
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. 持久化与可观测性
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. 持久化与可观测性">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 数据表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 Token 成本
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 绩效反馈
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. 配置逐组说明
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14. 配置逐组说明">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#141-freqtradefreqai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.1 Freqtrade/FreqAI 标准配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#142" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.2 标签与模型配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#143-llm_strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.3 llm_strategy 运行配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#144" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.4 已删除配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. 模式差异和故障矩阵
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. 安全设计
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. 公共 API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. 当前实现限制和已知缺口
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        19. 验证与演进原则
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../leverage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Short / Leverage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utility Sub-commands
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plotting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plotting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../exchanges/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exchange-specific Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_21" >
+        
+          
+          <label class="md-nav__link" for="__nav_21" id="__nav_21_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Data Analysis
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_21_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_21">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Data Analysis
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Jupyter Notebooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy_analysis_example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced-backtesting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backtest analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_22" >
+        
+          
+          <label class="md-nav__link" for="__nav_22" id="__nav_22_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Topics
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_22_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_22">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Advanced Topics
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Post-installation Tasks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trade-object/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Trade Object
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../lookahead-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lookahead analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../recursive-analysis/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recursive analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy-advanced/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Strategy
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced-hyperopt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Advanced Hyperopt
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advanced-orderflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orderflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../producer-consumer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Producer/Consumer mode
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../sql_cheatsheet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SQL Cheat-sheet
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../strategy_migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../updating/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Updating Freqtrade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deprecated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deprecated Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../developer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributors Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+      </div>
+    </div>
+  </div>
+  
+
+  <!-- Table of contents -->
+  
+  
+  <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+    <div class="md-sidebar__scrollwrap">
+      <div class="md-sidebar__inner">
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 系统定位
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. 系统定位">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1.1 核心不变量
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. 目录、层次和依赖方向
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 目录、层次和依赖方向">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 依赖图
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-composition-root" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Composition Root 与资源所有权
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 生命周期与完整时序
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 生命周期与完整时序">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-freqtrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 Freqtrade 启动
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-bot-loop" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 每轮 bot loop
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-k" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 每根 K 线
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 下单和成交
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 停止
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 特征工程原理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 特征工程原理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-freqai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 FreqAI 展开规则
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 趋势与波动特征
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 基础蜡烛与突破特征
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 细粒度路径特征
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 支撑、阻力与心理价位
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 外部市场特征
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5.6 外部市场特征">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        因果对齐
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. 标签生成与策略回放
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. 标签生成与策略回放">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.1 时间窗口
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.2 多空路径收益
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#63-candle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.3 candle 内事件顺序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#64" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.4 标签回放退出顺序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#65" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.5 方向分类标签
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#66-early-fail" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.6 early-fail 标签
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#67" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.7 关键价位事件标签
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#68-q20q50q80" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6.8 q20/q50/q80 的训练语义
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-freqllmpolicymodel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. FreqLLMPolicyModel 训练和推理
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="7. FreqLLMPolicyModel 训练和推理">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#71" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.1 模型组成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#72" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.2 可配置模型后端
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#73" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.3 关键价位样本加权
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#74" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.4 分类概率温度校准
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#75" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.5 分位数残差校准
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#76" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7.6 预测可用性
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. 确定性入场决策
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="8. 确定性入场决策">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#81" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.1 单边分量
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#82" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.2 门控顺序
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#83-llm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.3 LLM 门控
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#84-stake" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.4 stake 公式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#85" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.5 杠杆公式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#86" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8.6 组合风险
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. 退出策略
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. 退出策略">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#91-trailing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.1 trailing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#92-peak-retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.2 预测 peak retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#93-path-collapse-decay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.3 path collapse 和 decay
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#94" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.4 方向反转
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#95" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9.5 到期
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-llm-advisor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. LLM Advisor
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. LLM Advisor">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#101-prompt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.1 Prompt 组成
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#102-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.2 Provider 层
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#103-json" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.3 JSON 解析和验证
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#104" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10.4 对话上下文
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11. 归因系统
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="11. 归因系统">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#111" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.1 为什么记录被拒绝的信号
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#112" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.2 真实未来收益
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#113" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        11.3 实盘成熟
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12. 自适应反馈
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="12. 自适应反馈">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#121" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.1 模式
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#122" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.2 时间衰减
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#123" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.3 加权均值、有效样本量和标准误
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#124-isoos" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.4 IS/OOS
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#125" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.5 执行感知反事实回放
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#126" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.6 退出回放
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#127" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.7 熔断
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#128" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.8 应用参数
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#129" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        12.9 离线分析
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13. 持久化与可观测性
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="13. 持久化与可观测性">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.1 数据表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.2 Token 成本
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        13.3 绩效反馈
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#14" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14. 配置逐组说明
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="14. 配置逐组说明">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#141-freqtradefreqai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.1 Freqtrade/FreqAI 标准配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#142" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.2 标签与模型配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#143-llm_strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.3 llm_strategy 运行配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#144" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        14.4 已删除配置
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#15" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        15. 模式差异和故障矩阵
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#16" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        16. 安全设计
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#17-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        17. 公共 API
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#18" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        18. 当前实现限制和已知缺口
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#19" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        19. 验证与演进原则
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      </div>
+    </div>
+  </div>
+  
+
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/freqtrade/freqtrade/edit/develop/docs/freqllm.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="freqllm">FreqLLM 架构、原理与实现说明<a class="headerlink" href="#freqllm" title="Permanent link">&para;</a></h1>
+<h2 id="1">1. 系统定位<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>FreqLLM 是一个面向永续合约的多空策略系统。它不是“让 LLM 直接下单”，而是由四个彼此约束的部分组成：</p>
+<ol>
+<li><strong>FreqAI 多任务模型</strong>：从 K 线、技术指标、关键价位和可选的外部微观结构数据中预测方向、收益分位数和未来价格路径风险。</li>
+<li><strong>确定性决策引擎</strong>：按照固定顺序完成数据质量、方向、收益、关键价位、路径质量、LLM 上下文和风险门控。</li>
+<li><strong>LLM 慢速上下文过滤器</strong>：只提供市场拥挤、事件风险、方向偏置和杠杆折扣，不拥有直接交易权限。</li>
+<li><strong>归因与有界自适应系统</strong>：记录每个候选信号未来真实路径，通过衰减统计、回放、样本外验证和熔断机制调整有限参数。</li>
+</ol>
+<p>系统的实际决策关系为：</p>
+<div class="arithmatex">\[
+\text{Candles + Market Context}
+\xrightarrow{\text{FreqAI}}
+\text{Prediction}
+\xrightarrow{\text{Deterministic Policy + LLM Filter}}
+\text{Trade Decision}
+\]</div>
+<p>而不是：</p>
+<div class="arithmatex">\[
+\text{Prompt}\xrightarrow{\text{LLM}}\text{Exchange Order}
+\]</div>
+<h3 id="11">1.1 核心不变量<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<ul>
+<li>FreqAI 是快速主信号；LLM 不能凭自身意见产生入场。</li>
+<li><code>decision</code> 是唯一的交易决策核心，网络、数据库和文件系统不能进入纯决策计算。</li>
+<li>LLM 只能维持或缩小仓位、杠杆，不能突破 <code>risk</code> 的硬上限。</li>
+<li>标签、回测和外部数据必须保持因果顺序，禁止把信号时点之后才知道的数据作为特征。</li>
+<li>自适应只调整有边界的策略参数，不得修改固定风险底线。</li>
+<li>组合风险状态无法读取时 fail-closed，即拒绝新开仓。</li>
+<li>回测和 Hyperopt 不调用远端 LLM。</li>
+</ul>
+<h2 id="2">2. 目录、层次和依赖方向<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>freqtrade/freqllm/
+├── configuration.py               # 顾问/采集器配置、环境变量、URL 与凭据校验
+├── decision/
+│   └── engine.py                  # 纯领域配置、预测 DTO、LLM DTO、入场/退出引擎
+├── strategy/
+│   ├── contracts.py               # targets/runtime 共享的有类型数据契约
+│   ├── features.py                # FreqAI 特征工程
+│   ├── targets.py                 # 标签窗口和执行策略回放标签
+│   ├── execution.py               # Freqtrade 入场、退出、stake、leverage、成交回调
+│   ├── runtime.py                 # 顾问调度、信号成熟、自适应参数刷新
+│   └── market_data.py             # 外部特征读取、缓存、持久化回放和因果对齐
+├── advisor/
+│   ├── service.py                 # Prompt 编排、Provider 调用、响应校验
+│   ├── clients/                   # LLM port、OpenAI/Anthropic/Ollama 等 adapter
+│   └── collectors/                # 行情、多空比、账户/持仓上下文
+├── attribution/
+│   └── writer.py                  # 固定 schema CSV 与未来路径度量
+├── adaptive/
+│   ├── feedback.py                # 配置、状态、存储和在线更新 manager
+│   └── analysis.py                # 衰减统计、策略回放、OOS、熔断、离线 CLI
+├── observability/
+│   ├── performance.py             # 交易绩效统计和 Prompt 反馈
+│   ├── tokens.py                  # Token 与成本统计
+│   └── telegram.py                # Telegram 文本展示
+└── persistence/
+    ├── base.py                    # 独立 SQLAlchemy metadata
+    └── models.py                  # 统一数据库模型和 repository API
+
+user_data/
+├── freqllm/
+│   ├── llm_strategy.py            # Freqtrade 动态策略入口和 composition root
+│   └── config_example.json        # 完整配置示例
+└── freqaimodels/
+    └── FreqLLMPolicyModel.py      # FreqAI 动态模型入口
+</code></pre></div>
+<h3 id="21">2.1 依赖图<a class="headerlink" href="#21" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>graph TD
+    FT[Freqtrade / FreqAI] --&gt; ROOT[LLMStrategy composition root]
+    ROOT --&gt; EXEC[strategy.execution]
+    ROOT --&gt; RUNTIME[strategy.runtime]
+    ROOT --&gt; FEAT[strategy.features]
+    ROOT --&gt; TARGET[strategy.targets]
+    ROOT --&gt; MARKET[strategy.market_data]
+    TARGET --&gt; CONTRACT[strategy.contracts]
+    EXEC --&gt; DECISION[decision]
+    EXEC --&gt; ATTR[attribution]
+    EXEC --&gt; ADAPT[adaptive]
+    RUNTIME --&gt; ADAPT
+    RUNTIME --&gt; ADVISOR[advisor.service]
+    ADVISOR --&gt; CLIENTS[advisor.clients]
+    ADVISOR --&gt; COLLECTORS[advisor.collectors]
+    ADVISOR --&gt; OBS[observability]
+    MARKET --&gt; DB[persistence]
+    COLLECTORS --&gt; DB
+    OBS --&gt; DB
+</code></pre></div>
+<p>固定依赖规则：</p>
+<ul>
+<li><code>decision</code> 不依赖 Freqtrade、Pandas IO、SQL、HTTP 或 Provider SDK。</li>
+<li><code>strategy.targets</code> 和 <code>strategy.runtime</code> 共享的结构只放在 <code>strategy.contracts</code>，不能互相导入 mixin 实现。</li>
+<li><code>advisor.service</code> 只编排客户端和采集器；Provider adapter 不得反向依赖策略。</li>
+<li>跨模块使用子包 <code>__init__.py</code> 暴露的 API，禁止依赖其他模块私有属性。</li>
+<li><code>LLMStrategy</code> 和 <code>FreqLLMPolicyModel</code> 是动态插件入口，不能因静态引用较少而删除。</li>
+</ul>
+<h2 id="3-composition-root">3. Composition Root 与资源所有权<a class="headerlink" href="#3-composition-root" title="Permanent link">&para;</a></h2>
+<p><code>LLMStrategy</code> 继承以下适配 mixin：</p>
+<div class="highlight"><pre><span></span><code>StrategyExecutionMixin
+StrategyFreqaiMixin
+StrategyTargetsMixin
+StrategyRuntimeMixin
+StrategyMarketDataMixin
+IStrategy
+</code></pre></div>
+<p>主类不重新实现领域算法，它负责：</p>
+<ul>
+<li>解析 <code>SimpleStrategyConfig</code>；</li>
+<li>创建 <code>SimpleDecisionEngine</code>；</li>
+<li>创建 <code>SimpleAttributionWriter</code>；</li>
+<li>创建 <code>AdaptiveFeedbackManager</code>；</li>
+<li>创建并持有唯一的 <code>FreqLLMDatabase</code>；</li>
+<li>将同一数据库注入行情 collector、<code>TokenTracker</code> 和 <code>PerformanceTracker</code>；</li>
+<li>创建 Provider client 和 <code>LLMAdvisor</code>；</li>
+<li>在 <code>bot_stop</code> 中释放 Provider 和数据库连接池。</li>
+</ul>
+<p>主要运行状态：</p>
+<table>
+<thead>
+<tr>
+<th>状态</th>
+<th>所有者</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_advisor</code></td>
+<td>strategy root</td>
+<td>实盘 LLM 应用服务；回测为空</td>
+</tr>
+<tr>
+<td><code>_advisor_config</code></td>
+<td>strategy root</td>
+<td>已解析的顾问配置</td>
+</tr>
+<tr>
+<td><code>_freqllm_db</code></td>
+<td>strategy root</td>
+<td>统一行情/Token/绩效数据库</td>
+</tr>
+<tr>
+<td><code>_adaptive_manager</code></td>
+<td>strategy root</td>
+<td>自适应状态和独立 adaptive store</td>
+</tr>
+<tr>
+<td><code>_llm_advice[pair]</code></td>
+<td>runtime</td>
+<td>最近一次有效建议</td>
+</tr>
+<tr>
+<td><code>_llm_advice_time[pair]</code></td>
+<td>runtime</td>
+<td>建议产生时间，用于节流</td>
+</tr>
+<tr>
+<td><code>_external_feature_cache</code></td>
+<td>market-data</td>
+<td>按 pair 和时间范围缓存的外部数据</td>
+</tr>
+<tr>
+<td><code>_detail_dataframe_cache</code></td>
+<td>targets/market-data</td>
+<td>细粒度标签 K 线缓存</td>
+</tr>
+<tr>
+<td><code>_fee_rate_cache</code></td>
+<td>targets</td>
+<td>实盘交易费率缓存</td>
+</tr>
+</tbody>
+</table>
+<h2 id="4">4. 生命周期与完整时序<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<h3 id="41-freqtrade">4.1 Freqtrade 启动<a class="headerlink" href="#41-freqtrade" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>sequenceDiagram
+    participant FT as Freqtrade
+    participant S as LLMStrategy
+    participant A as Adaptive
+    participant DB as FreqLLMDatabase
+    participant C as LLMClientFactory
+    participant L as LLMAdvisor
+
+    FT-&gt;&gt;S: __init__(config)
+    S-&gt;&gt;S: SimpleStrategyConfig.from_config
+    S-&gt;&gt;S: 对齐 max_hold 与 label horizon
+    S-&gt;&gt;S: 计算 label 配置摘要并修改 FreqAI identifier
+    S-&gt;&gt;A: from_strategy_config
+    S-&gt;&gt;S: 创建 DecisionEngine / AttributionWriter
+    FT-&gt;&gt;S: bot_start()
+    alt BACKTEST / HYPEROPT / bypass
+        S-&gt;&gt;S: 进入 neutral LLM 模式
+    else LIVE / DRY_RUN
+        S-&gt;&gt;S: LLMStrategyConfig.from_config
+        S-&gt;&gt;DB: 创建或复用统一数据库
+        S-&gt;&gt;C: 创建 provider client
+        S-&gt;&gt;L: 注入 collector、tracker、DB
+    end
+</code></pre></div>
+<p><code>max_hold_candles</code> 会被强制对齐到标签 horizon，使模型学习的持有期和运行时策略一致。标签相关配置被序列化后计算 SHA-256 前 8 位并追加到 FreqAI identifier：</p>
+<div class="highlight"><pre><span></span><code>&lt;base-identifier&gt;-lh&lt;8-hex-digest&gt;
+</code></pre></div>
+<p>修改 horizon、手续费、滑点、SL/TP、trailing、early-fail 或 detail timeframe 后会得到新模型目录，避免混用不同标签语义的模型。</p>
+<h3 id="42-bot-loop">4.2 每轮 bot loop<a class="headerlink" href="#42-bot-loop" title="Permanent link">&para;</a></h3>
+<p><code>bot_loop_start(current_time)</code> 的顺序是：</p>
+<ol>
+<li>成熟实盘 pending attribution 信号；</li>
+<li>从 adaptive manager 刷新全局或 pair overlay；</li>
+<li>若为回测、旁路或 Advisor 不可用则结束；</li>
+<li>对白名单每个 pair 检查 LLM 分析间隔；</li>
+<li>到期时调用 <code>LLMAdvisor.analyze()</code>；</li>
+<li>只有 <code>available != false</code> 的建议才进入 <code>_llm_advice</code> 缓存；</li>
+<li>Provider 或采集失败时删除旧建议，防止无限使用过期上下文。</li>
+</ol>
+<p>调度条件为：</p>
+<div class="arithmatex">\[
+t_{now}-t_{last}\ge 60\times I
+\]</div>
+<p>其中 <span class="arithmatex">\(I=\text{schedule.analysis_interval_minutes}\)</span>。当前 pair 分析是串行的，因此 Provider 延迟会累积到整个白名单。</p>
+<h3 id="43-k">4.3 每根 K 线<a class="headerlink" href="#43-k" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>populate_indicators
+  └── freqai.start
+      ├── feature_engineering_expand_all
+      ├── feature_engineering_expand_basic
+      ├── feature_engineering_standard
+      ├── set_freqai_targets（训练窗口）
+      ├── FreqLLMPolicyModel.train / predict
+      └── 合并预测列、do_predict、DI_values
+
+populate_entry_trend
+  ├── 抽取并规范化 FreqAIPrediction
+  ├── 取得 LLMView（回测为 neutral）
+  ├── SimpleDecisionEngine.decide_entry
+  ├── 写归因与 adaptive signal
+  └── 写 enter_long / enter_short / enter_tag
+</code></pre></div>
+<h3 id="44">4.4 下单和成交<a class="headerlink" href="#44" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>custom_stake_amount</code> 从 entry tag 恢复已确定的 <code>stake_ratio</code>。</li>
+<li><code>leverage</code> 从 tag 恢复已确定的杠杆，并再次限制到交易所最大杠杆。</li>
+<li><code>confirm_trade_entry</code> 检查同方向持仓数量和总敞口。</li>
+<li><code>order_filled</code> 在入场时把预测、路径和风险快照写到 trade custom data；平仓时写 adaptive trade。</li>
+<li><code>custom_exit</code> 统一管理退出；<code>populate_exit_trend</code> 不产生 dataframe 退出信号。</li>
+</ul>
+<h3 id="45">4.5 停止<a class="headerlink" href="#45" title="Permanent link">&para;</a></h3>
+<p><code>bot_stop</code> 调用：</p>
+<ul>
+<li><code>LLMAdvisor.close()</code>：释放 Provider SDK 客户端资源；</li>
+<li><code>FreqLLMDatabase.close()</code>：移除 scoped session 并 dispose engine；</li>
+<li>FreqAI 自身线程仍由 Freqtrade <code>ft_bot_cleanup()</code> 管理。</li>
+</ul>
+<h2 id="5">5. 特征工程原理<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51-freqai">5.1 FreqAI 展开规则<a class="headerlink" href="#51-freqai" title="Permanent link">&para;</a></h3>
+<p>所有以 <code>%</code> 开头的列是 FreqAI 特征。<code>feature_engineering_expand_all</code> 会被 FreqAI 按：</p>
+<div class="arithmatex">\[
+\text{include\_timeframes}\times\text{indicator\_periods\_candles}
+\]</div>
+<p>自动调用和扩展。示例配置为 <code>15m/30m/1h × 4/8/32</code>，再叠加 <code>include_shifted_candles=2</code>，因此实际训练列数远大于代码中直接声明的特征数。</p>
+<h3 id="52">5.2 趋势与波动特征<a class="headerlink" href="#52" title="Permanent link">&para;</a></h3>
+<p>对周期 <span class="arithmatex">\(n\)</span>：</p>
+<ul>
+<li>RSI、MFI、ADX：标准 TA-Lib 定义；</li>
+<li>EMA：<span class="arithmatex">\(EMA_n\)</span>；</li>
+<li>ATR 相对值：</li>
+</ul>
+<div class="arithmatex">\[
+ATRRatio_n=\frac{ATR_n}{Close}
+\]</div>
+<ul>
+<li>相对成交量：</li>
+</ul>
+<div class="arithmatex">\[
+VolumeRel_n=\frac{Volume}{SMA_n(Volume)}
+\]</div>
+<ul>
+<li>价格偏离 EMA：</li>
+</ul>
+<div class="arithmatex">\[
+PriceToEMA_n=\frac{Close-EMA_n}{EMA_n}
+\]</div>
+<ul>
+<li>EMA 斜率：</li>
+</ul>
+<div class="arithmatex">\[
+EMASlope_n=\frac{EMA_n-EMA_{n,t-n}}{Close}
+\]</div>
+<ul>
+<li>OBV 斜率使用 <span class="arithmatex">\(n\)</span> 步 OBV 变化除以平均成交量；</li>
+<li>ADX slope 为 <span class="arithmatex">\(ADX_t-ADX_{t-n}\)</span>。</li>
+</ul>
+<p>安全除法会把零分母和无穷值转换为缺失值，最后由 FreqAI pipeline 处理。</p>
+<h3 id="53">5.3 基础蜡烛与突破特征<a class="headerlink" href="#53" title="Permanent link">&para;</a></h3>
+<p>基础特征包括价格变化、实体、上下影线、振幅、成交量变化及滚动高低点相对距离。例如：</p>
+<div class="arithmatex">\[
+Return_t=\frac{Close_t}{Close_{t-1}}-1
+\]</div>
+<div class="arithmatex">\[
+BodyRatio_t=\frac{Close_t-Open_t}{Open_t}
+\]</div>
+<div class="arithmatex">\[
+RangeRatio_t=\frac{High_t-Low_t}{Close_t}
+\]</div>
+<p>突破类特征比较当前价格与过去窗口高点/低点，并只使用当前及历史数据。</p>
+<h3 id="54">5.4 细粒度路径特征<a class="headerlink" href="#54" title="Permanent link">&para;</a></h3>
+<p>当 <code>label_detail_timeframe=5m</code> 且策略 timeframe 为 15m 时，每根策略 K 线含 3 根 detail candle。标准特征会计算：</p>
+<ul>
+<li>detail net return；</li>
+<li>第一根和最后一根收益；</li>
+<li>正负方向一致性；</li>
+<li>后段反转程度；</li>
+<li>收盘在区间中的位置；</li>
+<li>detail 区间相对主周期区间；</li>
+<li>上行和下行幅度。</li>
+</ul>
+<p>细粒度数据同时用于标签回放，主要解决同一 15m candle 内“先触发止损还是先触发止盈”的顺序不确定性。</p>
+<h3 id="55">5.5 支撑、阻力与心理价位<a class="headerlink" href="#55" title="Permanent link">&para;</a></h3>
+<p><code>features.py</code> 从滚动高低点、确认枢轴、前周期高低点和心理整数位构造候选价位，然后计算：</p>
+<ul>
+<li>最近支撑/阻力价格；</li>
+<li>最强支撑/阻力价格；</li>
+<li>距离百分比；</li>
+<li>ATR 标准化距离；</li>
+<li>价位强度。</li>
+</ul>
+<p>向上空间和向下空间分别是：</p>
+<div class="arithmatex">\[
+Room^{up}_{pct}=\frac{Resistance-Close}{Close}
+\]</div>
+<div class="arithmatex">\[
+Room^{down}_{pct}=\frac{Close-Support}{Close}
+\]</div>
+<p>ATR 标准化空间为：</p>
+<div class="arithmatex">\[
+Room^{up}_{ATR}=\frac{Resistance-Close}{ATR},\quad
+Room^{down}_{ATR}=\frac{Close-Support}{ATR}
+\]</div>
+<p>这些值既进入模型，也在确定性入场门中再次检查。</p>
+<h3 id="56">5.6 外部市场特征<a class="headerlink" href="#56" title="Permanent link">&para;</a></h3>
+<p>外部数据包括：</p>
+<ul>
+<li>funding rate、mark/index basis；</li>
+<li>open interest；</li>
+<li>taker buy/sell flow；</li>
+<li>spot buy/sell flow；</li>
+<li>多空账户比和持仓比；</li>
+<li>订单簿 spread、深度和 imbalance；</li>
+<li>参考价格 K 线；</li>
+<li>交易所最大杠杆。</li>
+</ul>
+<p>常用公式：</p>
+<div class="arithmatex">\[
+Basis=MarkPrice-IndexPrice
+\]</div>
+<div class="arithmatex">\[
+BasisPct=\frac{MarkPrice-IndexPrice}{IndexPrice}
+\]</div>
+<div class="arithmatex">\[
+FlowImbalance=\frac{BuyVolume-SellVolume}{BuyVolume+SellVolume}
+\]</div>
+<div class="arithmatex">\[
+SpreadPct=\frac{BestAsk-BestBid}{(BestAsk+BestBid)/2}\times100
+\]</div>
+<p>滚动 z-score：</p>
+<div class="arithmatex">\[
+z_t=\frac{x_t-\mu_{t,n}}{\sigma_{t,n}}
+\]</div>
+<p>当滚动标准差为 0 时结果设为缺失值，而不是无穷大。</p>
+<h4 id="_1">因果对齐<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h4>
+<p>外部特征优先从数据库读取，按时间排序后使用 backward/as-of 语义对齐到策略 candle：某根 candle 只能看到 <code>source_timestamp &lt;= candle_time</code> 的记录。没有历史记录且处于 live/dry-run 时，才调用实时 collector。回测默认 <code>external_features.disable_in_backtest=true</code>，避免实时请求和未来信息泄漏。</p>
+<h2 id="6">6. 标签生成与策略回放<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<h3 id="61">6.1 时间窗口<a class="headerlink" href="#61" title="Permanent link">&para;</a></h3>
+<p>设信号 candle 为 <span class="arithmatex">\(t\)</span>，真正模拟入场价使用下一根 candle 的 open：</p>
+<div class="arithmatex">\[
+P_0=Open_{t+1}
+\]</div>
+<p>标签 horizon 为：</p>
+<div class="arithmatex">\[
+H=clip(\text{label\_period\_candles},1,16)
+\]</div>
+<p>示例中 <span class="arithmatex">\(H=4\)</span>，主周期为 15m，即标签覆盖约 1 小时。若使用 5m detail timeframe，则回放步数为：</p>
+<div class="arithmatex">\[
+Steps=H\times\frac{15}{5}=12
+\]</div>
+<p>往返成本：</p>
+<div class="arithmatex">\[
+Cost_{rt}=2(FeeRate+SlippageRate)
+\]</div>
+<p>示例费率和滑点均为 0.0005，因此往返成本为 0.002。</p>
+<h3 id="62">6.2 多空路径收益<a class="headerlink" href="#62" title="Permanent link">&para;</a></h3>
+<p>多头在价格 <span class="arithmatex">\(P\)</span> 的收益：</p>
+<div class="arithmatex">\[
+r^{long}(P)=\frac{P}{P_0}-1
+\]</div>
+<p>空头使用可逆价格收益：</p>
+<div class="arithmatex">\[
+r^{short}(P)=\frac{P_0}{P}-1
+\]</div>
+<p>对每个回放步，计算 adverse/favorable：</p>
+<ul>
+<li>多头：<code>adverse = Low/P0 - 1</code>，<code>favorable = High/P0 - 1</code>；</li>
+<li>空头：<code>adverse = P0/High - 1</code>，<code>favorable = P0/Low - 1</code>。</li>
+</ul>
+<h3 id="63-candle">6.3 candle 内事件顺序<a class="headerlink" href="#63-candle" title="Permanent link">&para;</a></h3>
+<p>有 detail OHLC 时，根据该 detail candle 涨跌近似极值先后：</p>
+<ul>
+<li>多头 bullish candle：先 adverse 后 favorable；</li>
+<li>多头 bearish candle：先 favorable 后 adverse；</li>
+<li>空头顺序相反。</li>
+</ul>
+<p>无 detail 数据时保守地假设 adverse 先发生，避免在同一 candle 同时触及 TP/SL 时产生乐观偏差。</p>
+<h3 id="64">6.4 标签回放退出顺序<a class="headerlink" href="#64" title="Permanent link">&para;</a></h3>
+<p>每个 step 按以下顺序推进：</p>
+<ol>
+<li>更新 MAE、MFE、peak；</li>
+<li>检查固定止损；</li>
+<li>检查 trailing 或固定 TP；</li>
+<li>在 step close 检查 recovery failure；</li>
+<li>检查 post-profit drawdown；</li>
+<li>检查 early failure；</li>
+<li>检查 no progress；</li>
+<li>若始终未退出，在 horizon terminal close 退出。</li>
+</ol>
+<p>固定止损：</p>
+<div class="arithmatex">\[
+r_{adverse}\le -SL
+\]</div>
+<p>trailing 激活后：</p>
+<div class="arithmatex">\[
+Stop_{trail}=\max(Peak-Distance,\;Peak\times Retention,\;0)
+\]</div>
+<p>路径恢复允许亏损：</p>
+<div class="arithmatex">\[
+AllowedLoss=\max(|PreDD|\times RecoveryBand,\;SL\times RecoveryFloor)
+\]</div>
+<p>盈利后回撤允许值：</p>
+<div class="arithmatex">\[
+AllowedPostDD=\max(ExpectedPostDD\times PostBand,\;TrailDistance\times PostBand)
+\]</div>
+<p>最终策略收益标签：</p>
+<div class="arithmatex">\[
+PolicyReturn=ExitProfit-Cost_{rt}
+\]</div>
+<p>同时输出：</p>
+<ul>
+<li><code>peak_profit</code>：持有期间最大有利收益；</li>
+<li><code>mae</code>：最大不利 excursion；</li>
+<li><code>pre_profit_drawdown</code>：首次盈利前最差收益；</li>
+<li><code>post_profit_drawdown</code>：达到正 peak 后最大回撤。</li>
+</ul>
+<h3 id="65">6.5 方向分类标签<a class="headerlink" href="#65" title="Permanent link">&para;</a></h3>
+<p>分别回放 long 和 short 得到 <span class="arithmatex">\(R_L,R_S\)</span>。给定最小正收益 margin <span class="arithmatex">\(m\)</span> 和方向差 gap <span class="arithmatex">\(g\)</span>：</p>
+<div class="arithmatex">\[
+y_{dir}=\begin{cases}
+1,&amp;R_L&gt;m\land R_L-R_S\ge g\\
+-1,&amp;R_S&gt;m\land R_S-R_L\ge g\\
+0,&amp;\text{otherwise}
+\end{cases}
+\]</div>
+<p>对应 one-hot 标签生成 long/flat/short probability 训练列。</p>
+<h3 id="66-early-fail">6.6 early-fail 标签<a class="headerlink" href="#66-early-fail" title="Permanent link">&para;</a></h3>
+<p>在前 <span class="arithmatex">\(E\)</span> 个 step 内计算 adverse <span class="arithmatex">\(A\)</span>、favorable <span class="arithmatex">\(F\)</span> 和 close return <span class="arithmatex">\(R\)</span>：</p>
+<div class="arithmatex">\[
+EarlyFail=\mathbb{1}\left[A&gt;\rho_{mae}F\land R&lt;-\rho_{ret}F\right]
+\]</div>
+<p>示例：<span class="arithmatex">\(\rho_{mae}=2.0,\rho_{ret}=0.25\)</span>。它表示早期逆向运动显著大于有利运动，且窗口末收益仍明显为负。</p>
+<h3 id="67">6.7 关键价位事件标签<a class="headerlink" href="#67" title="Permanent link">&para;</a></h3>
+<p>buffer 定义为：</p>
+<div class="arithmatex">\[
+Buffer=ATR_{14}\times label\_level\_break\_buffer\_atr
+\]</div>
+<p>事件类别：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">值</th>
+<th>事件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;"><code>+1</code></td>
+<td>向上突破阻力且 terminal 仍在阻力之上</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>-1</code></td>
+<td>向下突破支撑且 terminal 仍在支撑之下</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>-2</code></td>
+<td>上刺阻力但 terminal 回到阻力下方，假突破</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>+2</code></td>
+<td>下刺支撑但 terminal 回到支撑上方，假跌破</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>+3</code></td>
+<td>支撑附近触碰后反弹</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>-3</code></td>
+<td>阻力附近触碰后回落</td>
+</tr>
+<tr>
+<td style="text-align: right;"><code>0</code></td>
+<td>无明确事件</td>
+</tr>
+</tbody>
+</table>
+<p>注意事件赋值存在顺序，后面的 bounce/reject 可覆盖前面满足的掩码。</p>
+<h3 id="68-q20q50q80">6.8 q20/q50/q80 的训练语义<a class="headerlink" href="#68-q20q50q80" title="Permanent link">&para;</a></h3>
+<p>生成标签时三个 quantile 列最初都写入同一个 <code>policy_return</code> 真值。差异不是标签值本身，而是模型训练目标函数：</p>
+<div class="arithmatex">\[
+L_{\alpha}(y,\hat y)=\begin{cases}
+\alpha(y-\hat y),&amp;y\ge\hat y\\
+(\alpha-1)(y-\hat y),&amp;y&lt;\hat y
+\end{cases}
+\]</div>
+<p>分别使用 <span class="arithmatex">\(\alpha=0.2,0.5,0.8\)</span>，得到保守、中位和乐观收益估计。</p>
+<h2 id="7-freqllmpolicymodel">7. <code>FreqLLMPolicyModel</code> 训练和推理<a class="headerlink" href="#7-freqllmpolicymodel" title="Permanent link">&para;</a></h2>
+<h3 id="71">7.1 模型组成<a class="headerlink" href="#71" title="Permanent link">&para;</a></h3>
+<p>一个 <code>_PolicyModelBundle</code> 包含：</p>
+<ul>
+<li>方向多分类器：class <code>-1/0/+1</code>；</li>
+<li>关键价位事件多分类器：class <code>-3...+3</code>；</li>
+<li>long/short early-fail 二分类器；</li>
+<li>long/short q20/q50/q80 quantile regressor；</li>
+<li>peak、MAE、pre/post drawdown 普通回归器。</li>
+</ul>
+<h3 id="72">7.2 可配置模型后端<a class="headerlink" href="#72" title="Permanent link">&para;</a></h3>
+<p><code>FreqLLMPolicyModel</code> 保持统一的标签、校准和 <code>_PolicyModelBundle</code> 输出协议，底层 estimator 由 <code>freqai.model_training_parameters.backend</code> 选择。允许值为固定白名单：</p>
+<table>
+<thead>
+<tr>
+<th>backend</th>
+<th>分类</th>
+<th>点回归</th>
+<th>分位数回归</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lightgbm</code></td>
+<td><code>LGBMClassifier</code></td>
+<td><code>LGBMRegressor</code></td>
+<td><code>objective=quantile</code></td>
+</tr>
+<tr>
+<td><code>xgboost</code></td>
+<td><code>XGBClassifier</code></td>
+<td><code>XGBRegressor</code></td>
+<td><code>objective=reg:quantileerror</code></td>
+</tr>
+<tr>
+<td><code>sklearn</code></td>
+<td><code>HistGradientBoostingClassifier</code></td>
+<td><code>HistGradientBoostingRegressor</code></td>
+<td><code>loss=quantile</code></td>
+</tr>
+<tr>
+<td><code>pytorch_mlp</code></td>
+<td>FreqAI <code>PyTorchMLPModel</code> + adapter</td>
+<td>FreqAI <code>PyTorchMLPModel</code> + adapter</td>
+<td>加权 pinball loss</td>
+</tr>
+<tr>
+<td><code>pytorch_transformer</code></td>
+<td>FreqAI <code>PyTorchTransformerModel</code> + adapter</td>
+<td>FreqAI <code>PyTorchTransformerModel</code> + adapter</td>
+<td>加权 pinball loss</td>
+</tr>
+</tbody>
+</table>
+<p>配置结构如下：</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;model_training_parameters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;backend&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;xgboost&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;backends&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;xgboost&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;classifier&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;max_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;regression&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;max_depth&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">6</span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;quantile&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">&quot;max_bin&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">256</span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>不同库的参数严格隔离；未知 backend、未知分组、旧的顶层 <code>classifier_parameters</code>/<code>regression_parameters</code> 以及非 JSON 参数都会在模型加载时被拒绝。实现只使用内置白名单，不根据配置动态导入 Python 类。</p>
+<p>PyTorch backend 复用 FreqAI 的底层 <code>PyTorchMLPModel</code> 和 <code>PyTorchTransformerModel</code>，并使用 FreqLLM adapter 提供 <code>fit/predict/predict_proba</code> 协议。使用前需要安装项目的 <code>freqai_rl</code> 可选依赖。训练循环支持逐样本权重、AdamW、梯度裁剪、加权交叉熵、加权 MSE 和加权 pinball loss。<code>device</code> 只允许 <code>auto/cpu/cuda/mps</code>；显式请求不可用设备会失败，不会静默回退。训练结束后模型移回 CPU，保持 joblib/cloudpickle 模型制品可移植。</p>
+<p>Transformer 使用只包含当前及历史行的左填充滑动窗口，为每个 candle 产生一个等长预测，不引入未来数据。<code>time_window</code> 必须不大于按 <code>nhead</code> 投影后的特征维度。因为当前 policy bundle 会为多个分类和回归目标训练独立网络，Transformer backend 的训练成本明显高于树模型和 MLP。</p>
+<p>分类标签会先映射到连续整数供 estimator 训练，推理时仍按原始 <code>-3...+3</code> 类别计算概率和期望。切换 backend、backend 参数、特征或标签策略时，策略会更新 FreqAI identifier 的 policy hash 后缀，从而使用新的模型目录，避免复用不兼容制品。</p>
+<h3 id="73">7.3 关键价位样本加权<a class="headerlink" href="#73" title="Permanent link">&para;</a></h3>
+<p>对样本到最近关键价位的最小 ATR 距离 <span class="arithmatex">\(d\)</span>，基础 FreqAI 权重 <span class="arithmatex">\(w\)</span> 被放大为：</p>
+<div class="arithmatex">\[
+w'=w\times\min\left(1+\alpha e^{-d/s},cap\right)
+\]</div>
+<p>示例 <span class="arithmatex">\(\alpha=1.5,s=0.75,cap=3.0\)</span>。越接近关键价位，样本权重越高。</p>
+<h3 id="74">7.4 分类概率温度校准<a class="headerlink" href="#74" title="Permanent link">&para;</a></h3>
+<p>样本足够时，前 80% 时间序列训练校准模型，后 20% 选择温度 <span class="arithmatex">\(T\in[0.6,3.0]\)</span>。原概率 <span class="arithmatex">\(p_k\)</span> 转换为：</p>
+<div class="arithmatex">\[
+\tilde p_k=\frac{\exp(\log(p_k)/T)}{\sum_j\exp(\log(p_j)/T)}
+\]</div>
+<p>通过加权负对数似然选择最佳 <span class="arithmatex">\(T\)</span>：</p>
+<div class="arithmatex">\[
+T^*=\arg\min_T -\frac{\sum_i w_i\log \tilde p_{i,y_i}}{\sum_i w_i}
+\]</div>
+<p>之后在全部训练样本上重训分类器，并使用该温度校准推理概率。若标签只有一个类别，则使用 constant classifier，避免底层分类器收到无效的单类别训练集。</p>
+<p>方向输出：</p>
+<div class="arithmatex">\[
+DirScore=P(long)-P(short)
+\]</div>
+<p>关键价位事件输出是类别期望：</p>
+<div class="arithmatex">\[
+LevelEvent=\sum_{k=-3}^{3}kP(k)
+\]</div>
+<h3 id="75">7.5 分位数残差校准<a class="headerlink" href="#75" title="Permanent link">&para;</a></h3>
+<p>若样本至少 100 且 calibration fraction 有效，按时间顺序保留尾部 holdout。先在前段训练，计算 holdout 残差：</p>
+<div class="arithmatex">\[
+e_i=y_i-\hat y_i
+\]</div>
+<p>取加权 <span class="arithmatex">\(\alpha\)</span> 分位数作为 shift：</p>
+<div class="arithmatex">\[
+Shift_{\alpha}=Q^{weighted}_{\alpha}(e)
+\]</div>
+<p>最终模型在全量样本重训，推理为：</p>
+<div class="arithmatex">\[
+\hat y^{cal}_{\alpha}=\hat y_{\alpha}+Shift_{\alpha}
+\]</div>
+<p>推理后强制分位数单调：</p>
+<div class="arithmatex">\[
+q_{20}\le q_{50}\le q_{80}
+\]</div>
+<h3 id="76">7.6 预测可用性<a class="headerlink" href="#76" title="Permanent link">&para;</a></h3>
+<p>策略抽取模型列后：</p>
+<ul>
+<li>所有目标列必须存在且为有限数；</li>
+<li>long/flat/short probability 被裁剪到 <code>[0,1]</code> 后重新归一化；</li>
+<li>FreqAI <code>do_predict</code> 必须允许预测；</li>
+<li>confidence 通常取方向概率质量；</li>
+<li>任一重要连续预测绝对值超过 <code>max_abs_prediction</code> 会被当作异常拒绝。</li>
+</ul>
+<h2 id="8">8. 确定性入场决策<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<h3 id="81">8.1 单边分量<a class="headerlink" href="#81" title="Permanent link">&para;</a></h3>
+<p>对方向 <span class="arithmatex">\(s\in\{long,short\}\)</span>：</p>
+<div class="arithmatex">\[
+Q_s=w_{50}q_{50,s}+w_{80}q_{80,s}+w_{20}q_{20,s}
+\]</div>
+<div class="arithmatex">\[
+RiskAdjustedEdge_s=P_s\times Q_s
+\]</div>
+<p>示例权重为 <code>0.7/0.2/0.1</code>。</p>
+<p>目标 peak：</p>
+<div class="arithmatex">\[
+TargetPeak=\max(4\times MinEdge,\;TP\times PeakMultiplier,\;10^{-6})
+\]</div>
+<p>奖励质量：</p>
+<div class="arithmatex">\[
+RewardQuality_s=clip\left(\frac{Peak_s}{TargetPeak},RewardFloor,RewardCap\right)
+\]</div>
+<p>先给予一段免费 pre-drawdown：</p>
+<div class="arithmatex">\[
+EffectivePreDD=\max(0,|PreDD|-SL\times FreeRatio)
+\]</div>
+<p>风险质量：</p>
+<div class="arithmatex">\[
+RiskQuality_s=clip\left(
+1-w_{pre}\frac{EffectivePreDD}{SL}-w_{post}\frac{PostDD}{SL},
+RiskFloor,RiskCap
+\right)
+\]</div>
+<p>最终 path score：</p>
+<div class="arithmatex">\[
+PathScore_s=RiskAdjustedEdge_s\times RewardQuality_s\times RiskQuality_s
+\]</div>
+<h3 id="82">8.2 门控顺序<a class="headerlink" href="#82" title="Permanent link">&para;</a></h3>
+<p><code>decide_entry()</code> 严格按以下顺序执行，首次失败即返回明确 reason：</p>
+<ol>
+<li><strong>FreqAI 可用性</strong>：缺列、无效概率、<code>do_predict</code> 拒绝等；</li>
+<li><strong>confidence</strong>：</li>
+</ol>
+<div class="arithmatex">\[
+Confidence\ge clip(MinConfidence+AdaptiveDelta,0,1)
+\]</div>
+<ol>
+<li><strong>异常值</strong>：连续预测绝对值不得超过 <code>max_abs_prediction</code>；</li>
+<li><strong>方向</strong>：</li>
+</ol>
+<div class="arithmatex">\[
+DirScore\ge\theta_{dir}\Rightarrow long
+\]</div>
+<div class="arithmatex">\[
+DirScore\le-\theta_{dir}\Rightarrow short
+\]</div>
+<ol>
+<li><strong>edge 正值和最小 edge</strong>；</li>
+<li><strong>方向 edge gap</strong>：</li>
+</ol>
+<div class="arithmatex">\[
+Edge_{selected}-Edge_{opposite}\ge MinEdgeGap\times AdaptiveMultiplier
+\]</div>
+<ol>
+<li><strong>risk-adjusted edge &gt; 0</strong>；</li>
+<li><strong>关键价位空间</strong>：</li>
+</ol>
+<div class="arithmatex">\[
+RoomPct\ge Cost_{rt}+MinEdge+RoomBuffer
+\]</div>
+<p>并要求 <code>RoomATR &gt;= min_level_room_atr</code>；
+9. <strong>强价位冲突</strong>：若强度超过门槛，则强价位 ATR 空间必须足够；
+10. <strong>level-event 冲突</strong>：多头阻止显著负事件，空头阻止显著正事件；
+11. <strong>early-fail</strong>：</p>
+<div class="arithmatex">\[
+P(EarlyFail) &lt; EarlyFailBlockThreshold
+\]</div>
+<ol>
+<li><strong>LLM 门控</strong>；</li>
+<li><strong>仓位与杠杆计算</strong>。</li>
+</ol>
+<h3 id="83-llm">8.3 LLM 门控<a class="headerlink" href="#83-llm" title="Permanent link">&para;</a></h3>
+<p>LLM 不可用：</p>
+<ul>
+<li><code>require_llm=true</code>：拒绝；</li>
+<li>否则使用 <code>unavailable_size_multiplier</code> 缩小仓位。</li>
+</ul>
+<p>可用时：</p>
+<ul>
+<li><code>avoid_trade=true</code>：拒绝；</li>
+<li><code>event_risk &gt;= llm_event_risk_block × adaptive_multiplier</code>：拒绝；</li>
+<li>bias 与 FreqAI 对齐：使用 <code>aligned_size_multiplier</code>；</li>
+<li>neutral：使用 <code>neutral_size_multiplier × adaptive_multiplier</code>；</li>
+<li>方向冲突且 LLM confidence 超过阈值：若 <code>llm_conflict_blocks=true</code> 则拒绝，否则按 neutral 倍率缩小。</li>
+</ul>
+<p>LLM 的 <code>action</code> 只在 direction bias 无效时辅助归一化方向。LLM 返回的 <code>stake_ratio</code>、<code>leverage</code>、<code>stop_loss_ratio</code> 是参考字段，<strong>不直接覆盖实际执行值</strong>。</p>
+<h3 id="84-stake">8.4 stake 公式<a class="headerlink" href="#84-stake" title="Permanent link">&para;</a></h3>
+<p>路径质量倍率：</p>
+<div class="arithmatex">\[
+Quality=clip\left(\frac{PathScore}{TargetPeak},StakeQualityMin,StakeQualityMax\right)
+\]</div>
+<p>早期失败仓位倍率：</p>
+<div class="arithmatex">\[
+EarlyStake=clip(1-w_{early,stake}P(EarlyFail),Floor_{stake},1)
+\]</div>
+<div class="arithmatex">\[
+SizeMultiplier=LLMMultiplier\times Quality\times EarlyStake
+\]</div>
+<div class="arithmatex">\[
+StakeRatio=clip(BaseStakeRatio\times SizeMultiplier,0,1)
+\]</div>
+<p>实际 stake：</p>
+<div class="arithmatex">\[
+Stake=WalletTotal\times StakeRatio
+\]</div>
+<p>再由 Freqtrade 的 min/max stake 和可用余额限制。钱包总额无法读取时退回框架 <code>proposed_stake</code>。</p>
+<h3 id="85">8.5 杠杆公式<a class="headerlink" href="#85" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+L_0=\min(BaseLeverage,MaxLeverage)\times RewardQuality\times RiskQuality
+\]</div>
+<div class="arithmatex">\[
+EarlyLev=clip(1-w_{early,lev}P(EarlyFail),Floor_{lev},1)
+\]</div>
+<p>LLM 杠杆折扣影响：</p>
+<div class="arithmatex">\[
+Cap_{eff}=1-Influence\times(1-LLMCapMultiplier)
+\]</div>
+<div class="arithmatex">\[
+L_1=L_0\times EarlyLev\times Cap_{eff}
+\]</div>
+<p>单笔账户损失约束：</p>
+<div class="arithmatex">\[
+AccountCap=\frac{MaxAccountLossPerTrade}{SL}
+\]</div>
+<p>最终：</p>
+<div class="arithmatex">\[
+Leverage=clip\left(\min(L_1,AccountCap),1,MaxLeverage\right)
+\]</div>
+<p>交易所回调还会再次限制到该交易对允许的最大杠杆。</p>
+<h3 id="86">8.6 组合风险<a class="headerlink" href="#86" title="Permanent link">&para;</a></h3>
+<p><code>confirm_trade_entry</code> 检查：</p>
+<ul>
+<li>同方向 open trades 不超过 <code>max_same_direction_positions</code>；</li>
+<li>总名义敞口不超过：</li>
+</ul>
+<div class="arithmatex">\[
+GrossExposure=\frac{\sum_i Stake_i\times Leverage_i}{WalletTotal}
+\]</div>
+<p>若 open trades 或 wallet 数据不可用，则拒绝新仓而不是绕过限制。</p>
+<h2 id="9">9. 退出策略<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
+<p>方向价格收益统一为：</p>
+<div class="arithmatex">\[
+PriceProfit=\begin{cases}
+Current/Entry-1,&amp;long\\
+Entry/Current-1,&amp;short
+\end{cases}
+\]</div>
+<p>退出按优先级检查：</p>
+<ol>
+<li>非 trailing 模式固定 TP；</li>
+<li>固定 SL；</li>
+<li>预测 pre-drawdown 恢复失败；</li>
+<li>长时间无进展；</li>
+<li>预测 peak retention；</li>
+<li>实际 post-profit drawdown 超过预测带；</li>
+<li>方向反转；</li>
+<li>path score collapse；</li>
+<li>edge/path decay；</li>
+<li>early-fail 风险恶化；</li>
+<li>horizon 到期。</li>
+</ol>
+<h3 id="91-trailing">9.1 trailing<a class="headerlink" href="#91-trailing" title="Permanent link">&para;</a></h3>
+<p>激活条件：</p>
+<div class="arithmatex">\[
+PeakProfit\ge TrailingActivation
+\]</div>
+<p>退出阈值：</p>
+<div class="arithmatex">\[
+TrailStop=\max(PeakProfit-TrailingDistance,\;PeakProfit\times Retention,\;0)
+\]</div>
+<h3 id="92-peak-retention">9.2 预测 peak retention<a class="headerlink" href="#92-peak-retention" title="Permanent link">&para;</a></h3>
+<p>激活值：</p>
+<div class="arithmatex">\[
+Activation=\max(MinProfit,PredictedPeak\times PeakActivationRatio)
+\]</div>
+<p>当实际 peak 已达到激活值，且当前正收益回落到：</p>
+<div class="arithmatex">\[
+CurrentProfit\le ActualPeak\times Retention
+\]</div>
+<p>则保护剩余盈利。</p>
+<h3 id="93-path-collapse-decay">9.3 path collapse 和 decay<a class="headerlink" href="#93-path-collapse-decay" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+CurrentPathScore\le EntryPathScore\times PathCollapseRatio
+\]</div>
+<p>且已经获得过最低 peak 时触发 collapse 退出。普通 decay 则比较当前 path score 与 <code>edge_decay_threshold</code>。如果曾盈利，会优先使用 profit retention，而非立即在任意价格退出。</p>
+<h3 id="94">9.4 方向反转<a class="headerlink" href="#94" title="Permanent link">&para;</a></h3>
+<p>对当前仓位方向，若相反方向概率/edge/path 达到反转阈值和 gap 要求，则退出。LLM 不参与退出，<code>action="close"</code> 也不会直接触发平仓。</p>
+<h3 id="95">9.5 到期<a class="headerlink" href="#95" title="Permanent link">&para;</a></h3>
+<p>自适应 <code>max_hold_candles</code> 只能缩短、不能超过配置和标签 horizon：</p>
+<div class="arithmatex">\[
+H_{effective}=clip(H_{adaptive},1,H_{configured})
+\]</div>
+<p>到期时结合 <code>expiry_decay_ratio</code> 判断路径是否已经失去继续持有价值。</p>
+<h2 id="10-llm-advisor">10. LLM Advisor<a class="headerlink" href="#10-llm-advisor" title="Permanent link">&para;</a></h2>
+<h3 id="101-prompt">10.1 Prompt 组成<a class="headerlink" href="#101-prompt" title="Permanent link">&para;</a></h3>
+<p>每次分析包含：</p>
+<ol>
+<li>系统约束和严格 JSON schema；</li>
+<li>多周期 K 线、ticker、funding、basis、OI、订单簿和 flow 摘要；</li>
+<li>多空比当前值、历史 percentile、z-score、趋势和反转；</li>
+<li>钱包、持仓和组合风险；</li>
+<li>当前 pair position；</li>
+<li>近期绩效反馈；</li>
+<li>支撑阻力摘要；</li>
+<li>可选历史对话。</li>
+</ol>
+<p>多空比分位数：</p>
+<div class="arithmatex">\[
+Percentile=\frac{\#\{x_i&lt;x_{current}\}}{N}\times100
+\]</div>
+<div class="arithmatex">\[
+z=\frac{x_{current}-\bar x}{s_x}
+\]</div>
+<p><code>&gt;=90%</code> 视为极端多头拥挤，<code>&lt;=10%</code> 视为极端空头拥挤。</p>
+<h3 id="102-provider">10.2 Provider 层<a class="headerlink" href="#102-provider" title="Permanent link">&para;</a></h3>
+<p>支持 OpenAI 兼容协议、Anthropic 和 Ollama。DeepSeek/Zai 复用 OpenAI transport。客户端统一返回：</p>
+<div class="highlight"><pre><span></span><code>LLMResponse(content, prompt_tokens, completion_tokens, total_tokens)
+</code></pre></div>
+<p>基础客户端提供有限重试和退避。可选 SDK 延迟加载，缺依赖时给出明确错误，不在回测中联网。</p>
+<h3 id="103-json">10.3 JSON 解析和验证<a class="headerlink" href="#103-json" title="Permanent link">&para;</a></h3>
+<p>解析顺序：</p>
+<ol>
+<li>直接 <code>json.loads</code>；</li>
+<li>提取 fenced JSON；</li>
+<li>提取第一个 JSON object；</li>
+<li>失败则返回 safe hold。</li>
+</ol>
+<p>验证后保证：</p>
+<ul>
+<li><code>action ∈ {open_long, open_short, close, hold}</code>；</li>
+<li><code>confidence,event_risk ∈ [0,1]</code>；</li>
+<li><code>leverage_cap_multiplier ∈ [0.1,1]</code>；</li>
+<li><code>direction_bias ∈ {long,short,neutral}</code>；</li>
+<li><code>avoid_trade</code> 为布尔；</li>
+<li>invalidators 最多 5 条；</li>
+<li>reason 受长度限制。</li>
+</ul>
+<p>响应结构不完整时会被标记 issue 并降级，而不是把未经校验的字段送入决策引擎。</p>
+<h3 id="104">10.4 对话上下文<a class="headerlink" href="#104" title="Permanent link">&para;</a></h3>
+<p><code>ConversationContextManager</code> 按 pair 保存有限轮 user/assistant。<code>max_turns=1</code> 表示只保留最近一轮。完整 Prompt 不写日志，但上下文仍驻留内存，因此不能把密钥或账户凭据放入 Prompt。</p>
+<h2 id="11_1">11. 归因系统<a class="headerlink" href="#11_1" title="Permanent link">&para;</a></h2>
+<h3 id="111">11.1 为什么记录被拒绝的信号<a class="headerlink" href="#111" title="Permanent link">&para;</a></h3>
+<p>归因 CSV 同时记录 emitted 和 rejected 候选。否则自适应系统只能观察“已选择样本”，无法估计门槛过严造成的机会损失。</p>
+<p>唯一业务身份为：</p>
+<div class="highlight"><pre><span></span><code>(pair, reference_time, side)
+</code></pre></div>
+<h3 id="112">11.2 真实未来收益<a class="headerlink" href="#112" title="Permanent link">&para;</a></h3>
+<p>归因同样使用下一根 open 入场。第 <span class="arithmatex">\(k\)</span> 步：</p>
+<div class="arithmatex">\[
+R^{long}_k=\frac{Close_k}{P_0}-1,\quad
+R^{short}_k=\frac{P_0}{Close_k}-1
+\]</div>
+<p>多头：</p>
+<div class="arithmatex">\[
+MFE_k=\frac{\max High_{1:k}}{P_0}-1
+\]</div>
+<div class="arithmatex">\[
+MAE_k=\frac{\min Low_{1:k}}{P_0}-1
+\]</div>
+<p>空头：</p>
+<div class="arithmatex">\[
+MFE_k=\frac{P_0}{\min Low_{1:k}}-1
+\]</div>
+<div class="arithmatex">\[
+MAE_k=\frac{P_0}{\max High_{1:k}}-1
+\]</div>
+<p>最多写 16 步，并记录 terminal step。detail 数据额外记录第 &#8531; 个策略 candle 内 favorable/adverse 哪个先出现。</p>
+<h3 id="113">11.3 实盘成熟<a class="headerlink" href="#113" title="Permanent link">&para;</a></h3>
+<p>实盘信号初始为 pending。成熟时间：</p>
+<div class="arithmatex">\[
+T_{mature}=T_{reference}+(H+1)\times Timeframe
+\]</div>
+<p>到期后 runtime 在 analyzed dataframe 中定位 reference candle，补齐 realized metrics，再把 signal 标为 matured。若 reference candle 已滚出 dataframe 或时间不能精确匹配，当前实现没有自动过期清理，该记录会继续 pending。</p>
+<h2 id="12">12. 自适应反馈<a class="headerlink" href="#12" title="Permanent link">&para;</a></h2>
+<h3 id="121">12.1 模式<a class="headerlink" href="#121" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>observe</code>：只收集，不生成更新；</li>
+<li><code>suggest</code>：生成报告，不修改运行参数；</li>
+<li><code>apply</code>：通过 EMA、慢参数冷却和熔断保护应用。</li>
+</ul>
+<p>支持全局参数和 per-pair overlay。</p>
+<h3 id="122">12.2 时间衰减<a class="headerlink" href="#122" title="Permanent link">&para;</a></h3>
+<p>对年龄为 <span class="arithmatex">\(a\)</span> 天、半衰期为 <span class="arithmatex">\(h\)</span> 天的样本：</p>
+<div class="arithmatex">\[
+w(a)=0.5^{a/h}
+\]</div>
+<p>未显式配置半衰期时：</p>
+<div class="arithmatex">\[
+h=\max(lookback\_days/2,0.5)
+\]</div>
+<h3 id="123">12.3 加权均值、有效样本量和标准误<a class="headerlink" href="#123" title="Permanent link">&para;</a></h3>
+<div class="arithmatex">\[
+\bar x_w=\frac{\sum_iw_ix_i}{\sum_iw_i}
+\]</div>
+<div class="arithmatex">\[
+n_{eff}=\frac{(\sum_iw_i)^2}{\sum_iw_i^2}
+\]</div>
+<div class="arithmatex">\[
+SE=\sqrt{\frac{s_w^2}{n_{eff}}}
+\]</div>
+<p>有效样本量而不是原始行数用于部分显著性判断，避免少数高权重样本造成虚假稳定性。</p>
+<h3 id="124-isoos">12.4 IS/OOS<a class="headerlink" href="#124-isoos" title="Permanent link">&para;</a></h3>
+<p>按时间排序后，前 <span class="arithmatex">\(1-oos\_fraction\)</span> 为 in-sample，尾部为 out-of-sample。候选参数先在 IS 搜索；只有 OOS 样本数足够且：</p>
+<div class="arithmatex">\[
+Objective_{new,OOS}\ge Objective_{current,OOS}
+\]</div>
+<p>才接受，否则完整回滚到 current parameters。</p>
+<h3 id="125">12.5 执行感知反事实回放<a class="headerlink" href="#125" title="Permanent link">&para;</a></h3>
+<p>启用 <code>execution_aware</code> 后，系统不是把每个候选信号都当成可成交，而是按时间扫描并维护：</p>
+<ul>
+<li>同 pair 占用；</li>
+<li><code>max_open_trades</code>；</li>
+<li>每笔回放退出 step 决定仓位何时释放。</li>
+</ul>
+<p>目标函数是可执行样本的净回报加权均值，而非所有候选的简单均值。</p>
+<h3 id="126">12.6 退出回放<a class="headerlink" href="#126" title="Permanent link">&para;</a></h3>
+<p>自适应使用 attribution 中的 <code>future_side_ret_k/MFE_k/MAE_k</code> 重新运行候选退出参数：</p>
+<ul>
+<li>adverse 触及 <code>-SL</code>：止损；</li>
+<li>trailing 激活后 close 跌破 trailing stop：退出；</li>
+<li>recovery、post-drawdown、no-progress：按与运行时一致的路径规则退出；</li>
+<li>无提前退出时使用 terminal；</li>
+<li>最终减去 round-trip cost。</li>
+</ul>
+<p>配对参数比较使用同一批交易的差值：</p>
+<div class="arithmatex">\[
+\Delta_i=Return_i(candidate)-Return_i(current)
+\]</div>
+<p>候选必须满足：</p>
+<div class="arithmatex">\[
+\bar\Delta&gt;0
+\]</div>
+<p>且在有标准误时：</p>
+<div class="arithmatex">\[
+\bar\Delta\ge z\times SE(\Delta)
+\]</div>
+<p>收紧参数使用 <code>z_tighten</code>，放松参数使用更严格的 <code>z_relax</code> 和更高样本数。</p>
+<h3 id="127">12.7 熔断<a class="headerlink" href="#127" title="Permanent link">&para;</a></h3>
+<p>交易按平仓时间排序，累计权益近似为：</p>
+<div class="arithmatex">\[
+E_t=\sum_{i=1}^{t}ProfitRatio_i
+\]</div>
+<div class="arithmatex">\[
+Drawdown_t=\max_{j\le t}E_j-E_t
+\]</div>
+<p>若当前连续亏损达到 <code>breaker_consecutive_losses</code>，或最大回撤达到 <code>breaker_drawdown</code>，熔断激活。熔断期间：</p>
+<ul>
+<li>允许收紧；</li>
+<li>禁止放松风险参数；</li>
+<li>LLM 和仓位相关放松同样被阻止。</li>
+</ul>
+<h3 id="128">12.8 应用参数<a class="headerlink" href="#128" title="Permanent link">&para;</a></h3>
+<p>普通连续参数使用 EMA：</p>
+<div class="arithmatex">\[
+\theta_{new}=\alpha\theta_{target}+(1-\alpha)\theta_{old}
+\]</div>
+<p>慢参数如持有期每次只变化 1，并满足 <code>slow_cooldown_cycles</code>。所有参数最终经过 <code>PARAM_BOUNDS</code> 裁剪。<code>LOCKED_PARAMS</code> 不允许在线修改。</p>
+<h3 id="129">12.9 离线分析<a class="headerlink" href="#129" title="Permanent link">&para;</a></h3>
+<p>CLI 输入 attribution CSV 和可选 backtest zip，输出：</p>
+<ul>
+<li>proposed params；</li>
+<li>IS/OOS、执行样本和熔断 metrics；</li>
+<li>每个修改 reason；</li>
+<li>数据来源。</li>
+</ul>
+<p>只有显式 <code>--apply-state</code> 才写 adaptive state。</p>
+<h2 id="13">13. 持久化与可观测性<a class="headerlink" href="#13" title="Permanent link">&para;</a></h2>
+<h3 id="131">13.1 数据表<a class="headerlink" href="#131" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>表</th>
+<th>内容</th>
+<th>关键字段</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>freqllm_trade_history</code></td>
+<td>绩效反馈交易</td>
+<td>pair、profit、duration、entry/exit/LLM reason</td>
+</tr>
+<tr>
+<td><code>freqllm_token_usage</code></td>
+<td>LLM 调用成本</td>
+<td>prompt/completion/total token、cost</td>
+</tr>
+<tr>
+<td><code>freqllm_ls_ratio_history</code></td>
+<td>多空比历史</td>
+<td>type、ratio、period、source timestamp</td>
+</tr>
+<tr>
+<td><code>freqllm_market_feature_history</code></td>
+<td>微观结构快照</td>
+<td>feature type、funding、basis、OI、flow、orderbook 等</td>
+</tr>
+</tbody>
+</table>
+<p>数据库支持 SQLite/MySQL/MariaDB，SQLAlchemy 使用参数绑定。时间在 DB 边界规范为 UTC，应用层返回 UTC-aware datetime。</p>
+<p>批量写入会按 <code>(pair,type/feature,period,key,source_timestamp)</code> 查询已有记录并去重，避免每轮采集重复写同一交易所时间点。</p>
+<h3 id="132-token">13.2 Token 成本<a class="headerlink" href="#132-token" title="Permanent link">&para;</a></h3>
+<p>若配置每千 Token 成本 <span class="arithmatex">\(c\)</span>：</p>
+<div class="arithmatex">\[
+Cost=\frac{TotalTokens}{1000}\times c
+\]</div>
+<p>Token tracker 同时保存内存累计值和数据库记录。</p>
+<h3 id="133">13.3 绩效反馈<a class="headerlink" href="#133" title="Permanent link">&para;</a></h3>
+<p>主要统计：总交易数、胜率、平均盈利、平均亏损。展示层还计算 Kelly 参考值：</p>
+<div class="arithmatex">\[
+f^*=p-\frac{1-p}{AvgWin/AvgLoss}
+\]</div>
+<p>该值仅用于展示/上下文，不直接决定 stake。</p>
+<h2 id="14">14. 配置逐组说明<a class="headerlink" href="#14" title="Permanent link">&para;</a></h2>
+<h3 id="141-freqtradefreqai">14.1 Freqtrade/FreqAI 标准配置<a class="headerlink" href="#141-freqtradefreqai" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th>必要性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>strategy/strategy_path</code></td>
+<td>必需</td>
+<td>动态加载 <code>LLMStrategy</code></td>
+</tr>
+<tr>
+<td><code>freqaimodel/freqaimodel_path</code></td>
+<td>必需</td>
+<td>动态加载 <code>FreqLLMPolicyModel</code></td>
+</tr>
+<tr>
+<td><code>timeframe</code></td>
+<td>必需</td>
+<td>必须与策略和标签理解一致</td>
+</tr>
+<tr>
+<td><code>trading_mode= futures</code></td>
+<td>策略语义必需</td>
+<td>系统支持 long/short 和 leverage</td>
+</tr>
+<tr>
+<td><code>margin_mode</code></td>
+<td>必需</td>
+<td>示例为 isolated</td>
+</tr>
+<tr>
+<td><code>train_period_days</code></td>
+<td>必需</td>
+<td>滚动训练窗口长度</td>
+</tr>
+<tr>
+<td><code>backtest_period_days</code></td>
+<td>必需</td>
+<td>每个模型负责的回测预测窗口</td>
+</tr>
+<tr>
+<td><code>live_retrain_hours</code></td>
+<td>实盘建议</td>
+<td>模型重训频率</td>
+</tr>
+<tr>
+<td><code>identifier</code></td>
+<td>必需</td>
+<td>特征、标签、backend 和模型参数摘要会自动追加 policy hash 后缀</td>
+</tr>
+<tr>
+<td><code>include_timeframes</code></td>
+<td>必需</td>
+<td>多周期特征展开</td>
+</tr>
+<tr>
+<td><code>include_shifted_candles</code></td>
+<td>可选</td>
+<td>增加历史滞后信息，同时增加维度</td>
+</tr>
+<tr>
+<td><code>DI_threshold</code></td>
+<td>建议</td>
+<td>控制分布外预测</td>
+</tr>
+<tr>
+<td><code>weight_factor</code></td>
+<td>可选</td>
+<td>FreqAI 时间新近度权重</td>
+</tr>
+<tr>
+<td>PCA/SVM</td>
+<td>可选</td>
+<td>降维/异常样本处理</td>
+</tr>
+</tbody>
+</table>
+<h3 id="142">14.2 标签与模型配置<a class="headerlink" href="#142" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th>公式/消费者</th>
+<th>必要性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>label_period_candles</code></td>
+<td>horizon <span class="arithmatex">\(H\)</span></td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>label_detail_timeframe</code></td>
+<td>candle 内路径顺序</td>
+<td>强烈建议，小于主周期</td>
+</tr>
+<tr>
+<td><code>label_fee_rate</code></td>
+<td><code>2×(fee+slippage)</code></td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>label_slippage_rate</code></td>
+<td>同上</td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>label_class_margin</code></td>
+<td>方向标签最小正收益</td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>label_class_edge_gap</code></td>
+<td>long/short 标签差</td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>label_level_break_buffer_atr</code></td>
+<td>价位事件 buffer</td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>label_early_fail_*</code></td>
+<td>early-fail 公式</td>
+<td>必需</td>
+</tr>
+<tr>
+<td><code>key_level_weight_*</code></td>
+<td>指数型样本加权</td>
+<td>可调</td>
+</tr>
+<tr>
+<td><code>quantile_calibration_fraction</code></td>
+<td>时间尾部残差校准</td>
+<td>建议</td>
+</tr>
+<tr>
+<td><code>backend</code></td>
+<td><code>lightgbm</code>、<code>xgboost</code>、<code>sklearn</code>、<code>pytorch_mlp</code> 或 <code>pytorch_transformer</code></td>
+<td>可选，默认 <code>lightgbm</code></td>
+</tr>
+<tr>
+<td><code>backends.&lt;name&gt;.classifier</code></td>
+<td>当前后端分类器参数</td>
+<td>可调</td>
+</tr>
+<tr>
+<td><code>backends.&lt;name&gt;.regression</code></td>
+<td>当前后端点回归参数</td>
+<td>可调</td>
+</tr>
+<tr>
+<td><code>backends.&lt;name&gt;.quantile</code></td>
+<td>当前后端分位数回归附加参数</td>
+<td>可调</td>
+</tr>
+</tbody>
+</table>
+<h3 id="143-llm_strategy">14.3 <code>llm_strategy</code> 运行配置<a class="headerlink" href="#143-llm_strategy" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>分组</th>
+<th>字段</th>
+<th>消费者与说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>根</td>
+<td><code>db_url</code></td>
+<td>统一行情/Token/绩效 DB；含密码时必须来自环境变量</td>
+</tr>
+<tr>
+<td>根</td>
+<td><code>llm_bypass_enabled</code></td>
+<td>手动禁用远端 Advisor</td>
+</tr>
+<tr>
+<td><code>llm</code></td>
+<td>provider/model/api_key/api_base_url</td>
+<td>Provider 连接；Key 必须为 env 引用</td>
+</tr>
+<tr>
+<td><code>llm</code></td>
+<td>token cost/log interval</td>
+<td>成本估算和日志周期</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td>enabled/max_turns</td>
+<td>pair 级对话历史</td>
+</tr>
+<tr>
+<td><code>schedule</code></td>
+<td>analysis interval</td>
+<td>LLM 慢速调度周期</td>
+</tr>
+<tr>
+<td><code>market_data</code></td>
+<td>kline timeframe/limit</td>
+<td>Prompt 多周期行情</td>
+</tr>
+<tr>
+<td><code>market_data</code></td>
+<td>L/S period/limit/display</td>
+<td>拥挤度历史和摘要</td>
+</tr>
+<tr>
+<td><code>market_data</code></td>
+<td>OI/reference/spot/leverage switches</td>
+<td>可选微观结构源</td>
+</tr>
+<tr>
+<td><code>signal</code></td>
+<td>confidence/edge/direction/level/LLM</td>
+<td>确定性入场门控</td>
+</tr>
+<tr>
+<td><code>risk</code></td>
+<td>stake/leverage/SL/TP/max loss</td>
+<td>硬执行边界</td>
+</tr>
+<tr>
+<td><code>simple_exit</code></td>
+<td>reverse/decay/trailing/path/expiry</td>
+<td>确定性退出</td>
+</tr>
+<tr>
+<td><code>external_features</code></td>
+<td>disable in backtest</td>
+<td>回测因果性开关</td>
+</tr>
+<tr>
+<td><code>portfolio</code></td>
+<td>same-direction/gross cap</td>
+<td>组合风险上限</td>
+</tr>
+<tr>
+<td><code>attribution</code></td>
+<td>enabled/directory</td>
+<td>CSV 归因</td>
+</tr>
+<tr>
+<td><code>adaptive</code></td>
+<td>sample/OOS/z/breaker/EMA/defaults</td>
+<td>有界反馈系统</td>
+</tr>
+<tr>
+<td><code>performance</code></td>
+<td>feedback trades/win threshold</td>
+<td>LLM Prompt 绩效摘要</td>
+</tr>
+</tbody>
+</table>
+<p>内部 <code>execution.leverage_max</code> 和 <code>sizing.max_stake_ratio</code> 不接受独立用户配置，而由 <code>risk.max_leverage</code> 和 <code>risk.stake_ratio</code> 派生。</p>
+<h3 id="144">14.4 已删除配置<a class="headerlink" href="#144" title="Permanent link">&para;</a></h3>
+<p>以下配置没有真实消费者或与硬风险策略重复，已删除：</p>
+<ul>
+<li><code>llm.analysis_timeout</code></li>
+<li><code>llm.min_confidence</code></li>
+<li><code>llm.log_full_prompt</code></li>
+<li><code>context.reset_price_change_pct</code></li>
+<li><code>schedule.trigger_timeframe</code></li>
+<li><code>market_data.kline_analysis_limit</code></li>
+<li><code>market_data.kline_display_candles</code></li>
+<li><code>market_data.market_feature_history_days</code></li>
+<li><code>market_data.open_interest_display_limit</code></li>
+<li><code>market_data.reference_price_display_limit</code></li>
+<li><code>market_data.spot_trade_display_limit</code></li>
+<li>用户级 <code>execution</code>、<code>sizing</code></li>
+</ul>
+<h2 id="15">15. 模式差异和故障矩阵<a class="headerlink" href="#15" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>行为</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Backtest/Hyperopt</td>
+<td>不创建 Provider；LLMView 为 neutral；建议禁用外部实时特征</td>
+</tr>
+<tr>
+<td>Live/Dry-run</td>
+<td>定时采集并调用 Advisor；失败时保留 FreqAI 主路径</td>
+</tr>
+<tr>
+<td>Provider 初始化失败</td>
+<td><code>_advisor=None</code>，LLM 被视为 unavailable</td>
+</tr>
+<tr>
+<td>单个行情源失败</td>
+<td>Prompt 对应 section 为空或标记失败，其他 section 继续</td>
+</tr>
+<tr>
+<td>JSON 无法解析</td>
+<td>safe hold advice</td>
+</tr>
+<tr>
+<td>LLM event risk/avoid</td>
+<td>确定性拒绝入场</td>
+</tr>
+<tr>
+<td>数据库失败</td>
+<td>外部历史降级；错误显式记录</td>
+</tr>
+<tr>
+<td>open trades/wallet 无法读取</td>
+<td>组合检查 fail-closed</td>
+</tr>
+<tr>
+<td>FreqAI 缺列或 <code>do_predict</code> 失败</td>
+<td>不入场</td>
+</tr>
+<tr>
+<td>adaptive OOS 变差</td>
+<td>提案完整回滚</td>
+</tr>
+<tr>
+<td>adaptive breaker 激活</td>
+<td>禁止放松，只允许收紧</td>
+</tr>
+</tbody>
+</table>
+<h2 id="16">16. 安全设计<a class="headerlink" href="#16" title="Permanent link">&para;</a></h2>
+<ul>
+<li>API Key、交易所 Key、Telegram Token、数据库密码只从环境变量读取。</li>
+<li><code>to_dict()</code> 对 API Key 和 DB URL 脱敏。</li>
+<li>非 Ollama endpoint 必须是 HTTPS，禁止 URL 内嵌凭据。</li>
+<li>默认拒绝 loopback、私网、链路本地、保留 IP 和内部域名；本机 Ollama HTTP 是唯一例外。</li>
+<li>SQLAlchemy 查询使用值绑定，不拼接外部 SQL。</li>
+<li>完整 Prompt 不写日志，避免账户和持仓信息泄露。</li>
+<li>API 示例只监听 <code>127.0.0.1</code>，<code>force_entry_enable=false</code>。</li>
+<li>attribution 输出目录只能由可信部署配置控制，不能接受远端用户路径。</li>
+</ul>
+<h2 id="17-api">17. 公共 API<a class="headerlink" href="#17-api" title="Permanent link">&para;</a></h2>
+<p>推荐：</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMStrategyConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.adaptive</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AdaptiveConfig</span><span class="p">,</span>
+    <span class="n">AdaptiveFeedbackManager</span><span class="p">,</span>
+    <span class="n">AdaptiveParameters</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.advisor</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMAdvisor</span><span class="p">,</span> <span class="n">LLMClientFactory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.attribution</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimpleAttributionWriter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.decision</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FreqAIPrediction</span><span class="p">,</span>
+    <span class="n">LLMView</span><span class="p">,</span>
+    <span class="n">SimpleDecision</span><span class="p">,</span>
+    <span class="n">SimpleDecisionEngine</span><span class="p">,</span>
+    <span class="n">SimpleStrategyConfig</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.observability</span><span class="w"> </span><span class="kn">import</span> <span class="n">PerformanceTracker</span><span class="p">,</span> <span class="n">TokenTracker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.persistence</span><span class="w"> </span><span class="kn">import</span> <span class="n">FreqLLMDatabase</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">freqtrade.freqllm.strategy</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrategyExecutionMixin</span>
+</code></pre></div>
+<p>稳定边界是子包导出的类和方法，而不是 <code>engine.py</code>、<code>service.py</code> 等内部文件名。</p>
+<h2 id="18">18. 当前实现限制和已知缺口<a class="headerlink" href="#18" title="Permanent link">&para;</a></h2>
+<p>以下内容是当前代码的真实边界，不应在部署文档中隐藏：</p>
+<ol>
+<li>strategy mixin 仍通过隐式 <code>self</code> 属性协作，单独实例化 mixin 不可用；后续应逐个替换为显式 service 对象。</li>
+<li>adaptive store 仍独立于 composition root 的统一 market/tracker DB 生命周期。</li>
+<li>Advisor 支持组合风险上下文参数，但当前 runtime 调用主要传 <code>pair_list</code> 和支撑阻力，部分扩展风险字段保持默认值。</li>
+<li>Prompt 中“预测 1–2 根 candle”的文字与示例 <code>label_period_candles=4</code> 不一致；实际以配置 horizon 为准。</li>
+<li><code>forward_ret</code> 仍在 DTO/归因 schema 中，但当前目标映射没有生产者，策略路径通常为默认值。</li>
+<li>long/short MAE 目标参与模型 ready contract，但没有进入 <code>FreqAIPrediction</code> 的核心入场公式；保留是为了模型/标签兼容。</li>
+<li>外部数据历史 cleanup API 已存在，但没有独立周期调度。</li>
+<li>pending signal 若 reference candle 被滚动窗口淘汰，当前没有自动过期机制。</li>
+<li>当前专用测试主要覆盖配置，决策、目标、模型、回调、Telegram 和 adaptive 仍需要 golden/contract tests。</li>
+<li>Telegram 展示层包含对旧 manager 属性的兼容探测；在当前简化策略上部分区块可能显示无数据。</li>
+</ol>
+<h2 id="19">19. 验证与演进原则<a class="headerlink" href="#19" title="Permanent link">&para;</a></h2>
+<p>修改策略前至少执行：</p>
+<div class="highlight"><pre><span></span><code>python3<span class="w"> </span>-m<span class="w"> </span>compileall<span class="w"> </span>-q<span class="w"> </span>freqtrade/freqllm<span class="w"> </span>user_data/freqllm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>user_data/freqaimodels/FreqLLMPolicyModel.py
+python3<span class="w"> </span>-m<span class="w"> </span>json.tool<span class="w"> </span>user_data/freqllm/config_example.json<span class="w"> </span>&gt;/dev/null
+ruff<span class="w"> </span>check<span class="w"> </span>freqtrade/freqllm<span class="w"> </span>user_data/freqllm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>user_data/freqaimodels/FreqLLMPolicyModel.py
+ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>freqtrade/freqllm<span class="w"> </span>user_data/freqllm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>user_data/freqaimodels/FreqLLMPolicyModel.py
+pytest<span class="w"> </span>-q<span class="w"> </span>tests/freqllm
+</code></pre></div>
+<p>演进状态：</p>
+<ol>
+<li>已为方向标签、策略回放、决策门控、退出优先级和归因 schema 增加 golden tests；</li>
+<li>已用 <code>StrategyCollaborators</code>、<code>StrategyRuntimeState</code> 和 <code>StrategyExecutionSettings</code> 替代 mixin 隐式属性契约；</li>
+<li>按计划暂不合并 FreqAI 和 Prompt 的外部市场 snapshot，继续保持各自现有的数据采集与时间语义；</li>
+<li>已将 attribution 字符串字典升级为 <code>AttributionRecord</code>，只在 CSV/分析边界序列化；</li>
+<li>已将 adaptive repository 纳入 <code>FreqLLMDatabase</code>，数据库由 composition root 统一创建和关闭；</li>
+<li>已使用实际 timeframe/horizon 生成 Prompt，并修正 Telegram 与平仓绩效写入链路；</li>
+<li>已直接删除旧字段、旧构造签名和旧 mixin 私有属性兼容，不提供迁移适配。</li>
+</ol>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+    
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../freqai-developers/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Developer guide">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Developer guide
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../leverage/" class="md-footer__link md-footer__link--next" aria-label="Next: Short / Leverage">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Short / Leverage
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+
+    <!-- Place this tag in your head or just before your close body tag. -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.annotate", "search.share", "content.code.copy", "content.action.edit", "navigation.top", "navigation.footer"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../javascripts/config.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
