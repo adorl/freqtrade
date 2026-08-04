@@ -38,6 +38,11 @@ from freqtrade.__init__ import __version__
 from freqtrade.constants import DUST_PER_COIN, Config
 from freqtrade.enums import MarketDirection, RPCMessageType, SignalDirection, TradingMode
 from freqtrade.exceptions import OperationalException
+from freqtrade.freqllm.observability.telegram import (
+    get_llm_orders_text,
+    get_llm_profit_text,
+    get_llm_tokens_text,
+)
 from freqtrade.misc import chunks, plural
 from freqtrade.persistence import Trade
 from freqtrade.rpc import RPC, RPCException, RPCHandler
@@ -222,6 +227,9 @@ class Telegram(RPCHandler):
             r"/version$",
             r"/marketdir (long|short|even|none)$",
             r"/marketdir$",
+            r"/llm_orders$",
+            r"/llm_profit$",
+            r"/llm_tokens$",
         ]
         # Create keys for generation
         valid_keys_print = [k.replace("$", "") for k in valid_keys]
@@ -309,6 +317,10 @@ class Telegram(RPCHandler):
             CommandHandler("tg_info", self._tg_info),
             CommandHandler("profit_long", self._profit_long),
             CommandHandler("profit_short", self._profit_short),
+            # FreqLLM custom commands
+            CommandHandler("llm_orders", self._llm_orders),
+            CommandHandler("llm_profit", self._llm_profit),
+            CommandHandler("llm_tokens", self._llm_tokens),
         ]
         callbacks = [
             CallbackQueryHandler(self._status_table, pattern="update_status_table"),
@@ -1988,6 +2000,12 @@ class Telegram(RPCHandler):
             "Avg. holding durations for buys and sells.`\n"
             "*/help:* `This help message`\n"
             "*/version:* `Show version`\n"
+            "\n"
+            "_FreqLLM_\n"
+            "------------\n"
+            "*/llm_orders:* `Show FreqLLM active orders and LLM advice status`\n"
+            "*/llm_profit:* `Show FreqLLM performance stats and risk control`\n"
+            "*/llm_tokens:* `Show LLM API token usage`\n"
         )
 
         await self._send_msg(message, parse_mode=ParseMode.MARKDOWN)
@@ -2286,3 +2304,59 @@ class Telegram(RPCHandler):
             )
         except TelegramError as telegram_err:
             logger.warning("TelegramError: %s! Giving up on that message.", telegram_err.message)
+
+    # ===== FreqLLM Custom Commands =====
+
+    def _get_llm_strategy(self) -> Any | None:
+        """Return the active strategy only when Freqtrade identifies it as LLMStrategy."""
+        try:
+            strategy = self._rpc._freqtrade.strategy
+            return strategy if strategy.get_strategy_name() == "LLMStrategy" else None
+        except (AttributeError, RuntimeError, TypeError, ValueError) as exc:
+            logger.debug("Unable to identify active FreqLLM strategy: %s", exc)
+            return None
+
+    @authorized_only
+    async def _llm_orders(self, update: Update, context: CallbackContext) -> None:
+        """
+        Handler for /llm_orders.
+        Show FreqLLM active orders and LLM advice status.
+        """
+        strategy = self._get_llm_strategy()
+        if strategy is None:
+            await self._send_msg(
+                "⚠️ Current strategy is not LLMStrategy. FreqLLM info unavailable."
+            )
+            return
+        msg = get_llm_orders_text(strategy)
+        await self._send_msg(msg, parse_mode=ParseMode.MARKDOWN)
+
+    @authorized_only
+    async def _llm_profit(self, update: Update, context: CallbackContext) -> None:
+        """
+        Handler for /llm_profit.
+        Show FreqLLM performance statistics and risk control status.
+        """
+        strategy = self._get_llm_strategy()
+        if strategy is None:
+            await self._send_msg(
+                "⚠️ Current strategy is not LLMStrategy. FreqLLM info unavailable."
+            )
+            return
+        msg = get_llm_profit_text(strategy)
+        await self._send_msg(msg, parse_mode=ParseMode.MARKDOWN)
+
+    @authorized_only
+    async def _llm_tokens(self, update: Update, context: CallbackContext) -> None:
+        """
+        Handler for /llm_tokens.
+        Show LLM API token usage statistics.
+        """
+        strategy = self._get_llm_strategy()
+        if strategy is None:
+            await self._send_msg(
+                "⚠️ Current strategy is not LLMStrategy. FreqLLM info unavailable."
+            )
+            return
+        msg = get_llm_tokens_text(strategy)
+        await self._send_msg(msg, parse_mode=ParseMode.MARKDOWN)

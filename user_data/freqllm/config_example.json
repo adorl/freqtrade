@@ -1,0 +1,419 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "max_open_trades": 5,
+  "stake_currency": "USDT",
+  "stake_amount": "unlimited",
+  "tradable_balance_ratio": 0.99,
+  "fiat_display_currency": "USD",
+  "dry_run": true,
+  "dry_run_wallet": 1000,
+  "cancel_open_orders_on_exit": true,
+  "timeframe": "15m",
+  "trading_mode": "futures",
+  "margin_mode": "isolated",
+  "db_url": "",
+  "logfile": "user_data/logs/freqtrade.log",
+  "exchange": {
+    "name": "binance",
+    "key": "$BINANCE_API_KEY",
+    "secret": "$BINANCE_API_SECRET",
+    "ccxt_config": {
+      "enableRateLimit": true
+    },
+    "ccxt_async_config": {
+      "enableRateLimit": true,
+      "rateLimit": 200
+    },
+    "pair_whitelist": [
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT",
+      "SOL/USDT:USDT",
+      "BNB/USDT:USDT"
+    ]
+  },
+  "entry_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1,
+    "price_last_balance": 0.0,
+    "check_depth_of_market": {
+      "enabled": false,
+      "bids_to_ask_delta": 1
+    }
+  },
+  "exit_pricing": {
+    "price_side": "same",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "order_types": {
+    "entry": "market",
+    "exit": "limit",
+    "stoploss": "market",
+    "stoploss_on_exchange": false,
+    "stoploss_on_exchange_interval": 60
+  },
+  "order_time_in_force": {
+    "entry": "GTC",
+    "exit": "GTC"
+  },
+  "unfilledtimeout": {
+    "entry": 3,
+    "exit": 3,
+    "exit_timeout_count": 0,
+    "unit": "minutes"
+  },
+  "strategy": "LLMStrategy",
+  "strategy_path": "user_data/freqllm/",
+  "freqaimodel": "FreqLLMPolicyModel",
+  "freqaimodel_path": "user_data/freqaimodels/",
+  "freqai": {
+    "enabled": true,
+    "purge_old_models": 2,
+    "train_period_days": 30,
+    "backtest_period_days": 1,
+    "live_retrain_hours": 6,
+    "identifier": "freqllm-policy-v4",
+    "feature_parameters": {
+      "include_timeframes": [
+        "15m",
+        "30m",
+        "1h"
+      ],
+      "include_corr_pairlist": [],
+      "label_period_candles": 4,
+      "label_detail_timeframe": "5m",
+      "label_fee_rate": 0.0005,
+      "label_slippage_rate": 0.0005,
+      "label_class_margin": 0.0002,
+      "label_class_edge_gap": 0.001,
+      "label_level_break_buffer_atr": 0.1,
+      "label_early_fail_candles": 2,
+      "label_early_fail_mae_mfe_ratio": 2.0,
+      "label_early_fail_ret_mfe_ratio": 0.25,
+      "include_shifted_candles": 2,
+      "DI_threshold": 1.0,
+      "weight_factor": 0.9,
+      "principal_component_analysis": false,
+      "use_SVM_to_remove_outliers": true,
+      "indicator_periods_candles": [
+        4,
+        8,
+        32
+      ],
+      "plot_feature_importances": 0
+    },
+    "data_split_parameters": {
+      "test_size": 0,
+      "shuffle": false,
+      "random_state": 7
+    },
+    "model_training_parameters": {
+      "backend": "lightgbm",
+      "key_level_weight_alpha": 1.5,
+      "key_level_weight_scale_atr": 0.75,
+      "key_level_weight_cap": 3.0,
+      "quantile_calibration_fraction": 0.2,
+      "backends": {
+        "lightgbm": {
+          "classifier": {
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "num_leaves": 31,
+            "min_child_samples": 30
+          },
+          "regression": {
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "num_leaves": 31,
+            "min_child_samples": 30
+          },
+          "quantile": {}
+        },
+        "xgboost": {
+          "classifier": {
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "max_depth": 6,
+            "min_child_weight": 1
+          },
+          "regression": {
+            "n_estimators": 300,
+            "learning_rate": 0.03,
+            "max_depth": 6,
+            "min_child_weight": 1
+          },
+          "quantile": {}
+        },
+        "sklearn": {
+          "classifier": {
+            "max_iter": 300,
+            "learning_rate": 0.03,
+            "max_leaf_nodes": 31,
+            "min_samples_leaf": 30
+          },
+          "regression": {
+            "max_iter": 300,
+            "learning_rate": 0.03,
+            "max_leaf_nodes": 31,
+            "min_samples_leaf": 30
+          },
+          "quantile": {}
+        },
+        "pytorch_mlp": {
+          "classifier": {
+            "hidden_dim": 256,
+            "n_layer": 2,
+            "dropout_percent": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": 64,
+            "n_epochs": 10,
+            "device": "auto"
+          },
+          "regression": {
+            "hidden_dim": 256,
+            "n_layer": 2,
+            "dropout_percent": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": 64,
+            "n_epochs": 10,
+            "device": "auto"
+          },
+          "quantile": {}
+        },
+        "pytorch_transformer": {
+          "classifier": {
+            "hidden_dim": 256,
+            "n_layer": 2,
+            "nhead": 4,
+            "time_window": 16,
+            "dropout_percent": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": 64,
+            "n_epochs": 10,
+            "device": "auto"
+          },
+          "regression": {
+            "hidden_dim": 256,
+            "n_layer": 2,
+            "nhead": 4,
+            "time_window": 16,
+            "dropout_percent": 0.2,
+            "learning_rate": 0.0003,
+            "batch_size": 64,
+            "n_epochs": 10,
+            "device": "auto"
+          },
+          "quantile": {}
+        }
+      }
+    }
+  },
+  "telegram": {
+    "enabled": false,
+    "token": "$TELEGRAM_BOT_TOKEN",
+    "chat_id": "$TELEGRAM_CHAT_ID",
+    "notification_settings": {
+      "status": "on",
+      "warning": "on",
+      "startup": "on",
+      "entry": "on",
+      "entry_fill": "on",
+      "exit": {
+        "roi": "on",
+        "emergency_exit": "on",
+        "force_exit": "on",
+        "exit_signal": "on",
+        "trailing_stop_loss": "on",
+        "stop_loss": "on",
+        "stoploss_on_exchange": "on",
+        "custom_exit": "on",
+        "partial_exit": "off"
+      },
+      "exit_fill": "on",
+      "protection_trigger": "off",
+      "protection_trigger_global": "on"
+    }
+  },
+  "api_server": {
+    "enabled": false,
+    "listen_ip_address": "127.0.0.1",
+    "listen_port": 20001,
+    "verbosity": "error",
+    "enable_openapi": false,
+    "jwt_secret_key": "$FREQTRADE_JWT_SECRET_AT_LEAST_32_CHARS",
+    "CORS_origins": [],
+    "username": "$FREQTRADE_API_USERNAME",
+    "password": "$FREQTRADE_API_PASSWORD"
+  },
+  "bot_name": "llmtrade_simple",
+  "initial_state": "running",
+  "force_entry_enable": false,
+  "internals": {
+    "process_throttle_secs": 5
+  },
+  "dataformat_ohlcv": "json",
+  "dataformat_trades": "jsongz",
+  "pairlists": [
+    {
+      "method": "StaticPairList"
+    }
+  ],
+  "llm_strategy": {
+    "db_url": "$FREQLLM_DB_URL",
+    "llm_bypass_enabled": false,
+    "llm": {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "api_key": "$DEEPSEEK_API_KEY",
+      "api_base_url": "https://api.deepseek.com",
+      "token_cost_per_1k": 0.0014,
+      "token_stats_log_interval": 10
+    },
+    "context": {
+      "enabled": true,
+      "max_turns": 1
+    },
+    "schedule": {
+      "analysis_interval_minutes": 15
+    },
+    "market_data": {
+      "kline_limit": 80,
+      "kline_timeframes": [
+        "15m",
+        "30m",
+        "1h"
+      ],
+      "long_short_ratio_period": "15m",
+      "long_short_ratio_limit": 48,
+      "ls_ratio_display_limit": 3,
+      "open_interest_enabled": true,
+      "open_interest_limit": 48,
+      "reference_price_klines_enabled": true,
+      "reference_price_kline_limit": 16,
+      "spot_trade_flow_enabled": true,
+      "spot_trade_limit": 500,
+      "leverage_stats_enabled": true
+    },
+    "signal": {
+      "min_confidence": 0.4,
+      "min_edge": 0.0015,
+      "min_edge_gap": 0.001,
+      "max_abs_prediction": 0.1,
+      "dir_enter_threshold": 0.2,
+      "dir_reverse_threshold": 0.25,
+      "require_edge_positive": true,
+      "min_level_room_atr": 0.35,
+      "level_room_buffer_pct": 0.0,
+      "level_event_conflict_threshold": 0.35,
+      "strong_level_room_atr": 0.35,
+      "min_level_strength": 0.0,
+      "edge_q50_weight": 0.7,
+      "edge_q80_weight": 0.2,
+      "edge_q20_weight": 0.1,
+      "llm_event_risk_block": 0.8,
+      "llm_conflict_blocks": true,
+      "llm_conflict_confidence": 0.6,
+      "require_llm": false,
+      "neutral_size_multiplier": 0.65,
+      "unavailable_size_multiplier": 0.7,
+      "aligned_size_multiplier": 1.0
+    },
+    "risk": {
+      "stake_ratio": 0.25,
+      "leverage": 3.0,
+      "max_leverage": 5.0,
+      "stop_loss_pct": 0.01,
+      "take_profit_pct": 0.005,
+      "max_account_loss_per_trade": 0.03
+    },
+    "simple_exit": {
+      "max_hold_candles": 4,
+      "exit_on_reverse_signal": true,
+      "exit_on_edge_decay": true,
+      "reverse_edge_gap": 0.001,
+      "edge_decay_threshold": 0.0,
+      "trailing_enabled": true,
+      "trailing_activation_pct": 0.003,
+      "trailing_distance_pct": 0.0015,
+      "edge_decay_profit_retention": 0.75,
+      "edge_decay_min_profit_pct": 0.001,
+      "recovery_band_mult": 1.2,
+      "recovery_sl_floor_ratio": 0.25,
+      "peak_activation_ratio": 0.7,
+      "post_drawdown_band_mult": 1.2,
+      "path_collapse_ratio": 0.2,
+      "expiry_decay_ratio": 0.5
+    },
+    "external_features": {
+      "disable_in_backtest": true
+    },
+    "portfolio": {
+      "enabled": true,
+      "max_same_direction_positions": 3,
+      "max_gross_exposure": 3.0
+    },
+    "attribution": {
+      "enabled": true,
+      "directory": "user_data/backtest_results"
+    },
+    "adaptive": {
+      "enabled": true,
+      "mode": "suggest",
+      "lookback_days": 14,
+      "min_mature_signals": 100,
+      "min_closed_trades": 10,
+      "update_interval_signals": 100,
+      "update_interval_trades": 20,
+      "opportunity_threshold": 0.004,
+      "db_url": "$FREQLLM_ADAPTIVE_DB_URL",
+      "per_pair": false,
+      "min_pair_signals": 60,
+      "oos_fraction": 0.3,
+      "min_oos_signals": 30,
+      "min_samples_rule": 30,
+      "relax_min_samples": 60,
+      "z_tighten": 1.64,
+      "z_relax": 2.33,
+      "decay_half_life_days": 0,
+      "breaker_consecutive_losses": 4,
+      "breaker_drawdown": 0.06,
+      "ema_alpha": 0.3,
+      "slow_cooldown_cycles": 5,
+      "defaults": {
+        "dir_enter_threshold": 0.2,
+        "dir_reverse_threshold": 0.25,
+        "path_gap_threshold_multiplier": 1.0,
+        "target_peak_tp_multiplier": 0.33,
+        "pre_drawdown_weight": 1.0,
+        "post_drawdown_weight": 0.5,
+        "pre_drawdown_free_ratio": 0.0,
+        "reward_quality_floor": 0.5,
+        "risk_quality_floor": 0.25,
+        "edge_decay_profit_retention": 0.75,
+        "trailing_activation_pct": 0.003,
+        "trailing_distance_pct": 0.0015,
+        "reverse_edge_gap": 0.001,
+        "no_progress_age": 3,
+        "no_progress_min_profit_multiplier": 1.0,
+        "max_hold_candles": 4,
+        "recovery_band_mult": 1.2,
+        "recovery_sl_floor_ratio": 0.25,
+        "peak_activation_ratio": 0.7,
+        "post_drawdown_band_mult": 1.2,
+        "path_collapse_ratio": 0.2,
+        "expiry_decay_ratio": 0.5,
+        "llm_event_risk_block_mult": 1.0,
+        "llm_conflict_confidence_mult": 1.0,
+        "llm_neutral_size_mult": 1.0,
+        "llm_leverage_cap_influence": 1.0,
+        "take_profit_multiplier": 1.0
+      },
+      "output_path": "user_data/freqllm/adaptive/adaptive_report.json"
+    },
+    "performance": {
+      "feedback_trades": 5,
+      "win_rate_threshold": 0.4
+    }
+  }
+}

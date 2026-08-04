@@ -32,6 +32,7 @@ nav:
         - Running FreqAI: freqai-running.md
         - Reinforcement Learning: freqai-reinforcement-learning.md
         - Developer guide: freqai-developers.md
+        - FreqLLM architecture: freqllm.md
     - Short / Leverage: leverage.md
     - Utility Sub-commands: utils.md
     - Plotting: plotting.md

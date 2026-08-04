@@ -1,5 +1,5 @@
 """
-This module contains the class to persist trades into SQLite
+This module contains the class to persist trades into database (SQLite/MySQL/MariaDB)
 """
 
 import functools
@@ -72,6 +72,17 @@ def init_db(db_url: str) -> None:
                 "connect_args": {"check_same_thread": False},
             }
         )
+    # MySQL/MariaDB connection pool configuration
+    elif db_url.startswith("mysql") or db_url.startswith("mariadb"):
+        kwargs.update(
+            {
+                "pool_size": 16,
+                "max_overflow": 32,
+                "pool_timeout": 60,
+                "pool_recycle": 1800,
+                "pool_pre_ping": True,
+            }
+        )
 
     try:
         engine = create_engine(db_url, future=True, **kwargs)
@@ -116,3 +127,4 @@ def custom_data_rpc_wrapper(func):
             _CustomData.session.remove()
 
     return wrapper
+
